@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 655278882a6de7b41a92473b7afc0325, type: 3}
+  m_Name: Earth Monster
+  m_EditorClassIdentifier: 
+  monsterName: Earth Monster
+  description: 
+  element: 2
+  defaultStarLevel: 2
+  modelPrefab: {fileID: 4462514469482156001, guid: c962d81b89540834b866cba90a03ec25, type: 3}
+  baseHP: 120
+  baseATK: 20
+  baseDEF: 15
+  baseSPD: 10
+  baseEnergy: 50
+  baseCriticalRate: 5
+  baseCriticalDamage: 150
+  baseAccuracy: 85
+  baseResistance: 15
+  normalAttack: {fileID: 11400000, guid: 3030a08b7cb883a46895d955bc208466, type: 2}
+  specialAttack: {fileID: 11400000, guid: a49fa87b2d8df264ab1be48ed3eec0ca, type: 2}
+  ultimate: {fileID: 11400000, guid: 672ab790ab71b3e4a87c570f756d8bd7, type: 2}
+  icon: {fileID: 21300000, guid: 66421a68c80afe247bc18d25d0dde5ca, type: 3}
+  monsterColor: {r: 1, g: 1, b: 1, a: 1}
+  aggressiveness: 0.5
+  intelligence: 0.5

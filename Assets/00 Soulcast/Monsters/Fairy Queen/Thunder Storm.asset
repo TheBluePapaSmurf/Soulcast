@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96414f3068a1ac74e8c0e8d1aca714b1, type: 3}
+  m_Name: Thunder Storm
+  m_EditorClassIdentifier: 
+  actionName: Thunder Storm
+  description: Attacks all enemies to inflict continues damage for 2 turn
+  category: 2
+  type: 0
+  targetType: 1
+  requiresTarget: 1
+  attackRange: 1
+  energyCost: 0
+  cooldownTurns: 5
+  basePower: 0
+  usesAttackStat: 1
+  ignoresDefense: 0
+  statusEffects:
+  - effectName: Continues Damage
+    duration: 2
+    damagePerTurn: 50
+    healPerTurn: 0
+    preventAction: 0
+  statModifiers: []
+  effectPrefab: {fileID: 0}
+  soundEffect: {fileID: 0}
+  icon: {fileID: 21300000, guid: 3f658d47e711b734bbf84973d5f3f472, type: 3}
+  healsUser: 0
+  healAmount: 0
+  criticalChance: 0.1
+  criticalMultiplier: 1.5

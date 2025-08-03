@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96414f3068a1ac74e8c0e8d1aca714b1, type: 3}
+  m_Name: Inferno
+  m_EditorClassIdentifier: 
+  actionName: Inferno
+  description: 
+  category: 2
+  type: 0
+  targetType: 0
+  requiresTarget: 1
+  attackRange: 1
+  energyCost: 0
+  cooldownTurns: 3
+  basePower: 25
+  usesAttackStat: 1
+  ignoresDefense: 0
+  statusEffects:
+  - effectName: Burn
+    duration: 2
+    damagePerTurn: 10
+    healPerTurn: 0
+    preventAction: 0
+  statModifiers: []
+  effectPrefab: {fileID: 2053101587433184381, guid: 225b7c79041ef654383d9c00d970f111, type: 3}
+  soundEffect: {fileID: 0}
+  icon: {fileID: 21300000, guid: 490de9f76f8a86f40ad25fe207a24623, type: 3}
+  healsUser: 0
+  healAmount: 0
+  criticalChance: 0.1
+  criticalMultiplier: 1.5

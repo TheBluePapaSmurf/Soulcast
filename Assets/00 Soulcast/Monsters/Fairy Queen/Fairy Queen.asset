@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 655278882a6de7b41a92473b7afc0325, type: 3}
+  m_Name: Fairy Queen
+  m_EditorClassIdentifier: 
+  monsterName: Fairy Queen
+  description: 
+  element: 3
+  defaultStarLevel: 3
+  modelPrefab: {fileID: 5093301849020271738, guid: 63202963dc6333d478f87a6e98e34a2c, type: 3}
+  baseHP: 3600
+  baseATK: 240
+  baseDEF: 175
+  baseSPD: 103
+  baseEnergy: 50
+  baseCriticalRate: 15
+  baseCriticalDamage: 155
+  baseAccuracy: 0
+  baseResistance: 15
+  normalAttack: {fileID: 11400000, guid: 884488905f8233043a72c23050568fc6, type: 2}
+  specialAttack: {fileID: 11400000, guid: 8beb0c3eac699714fa255ae52e09ed98, type: 2}
+  ultimate: {fileID: 11400000, guid: 18ed12b08d81e324a86cca534344c110, type: 2}
+  icon: {fileID: 21300000, guid: 980ee4374fd8ff04fbbf69cc2584c0f9, type: 3}
+  monsterColor: {r: 1, g: 1, b: 1, a: 1}
+  aggressiveness: 0.5
+  intelligence: 0.5
