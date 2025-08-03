@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f6c98aef6708d34098c82ae3366d69c, type: 3}
+  m_Name: Energy
+  m_EditorClassIdentifier: 
+  setName: Energy
+  setDescription: Engraving 2 pieces of this Rune will increase the Monster's HP
+    by 15%. Equipping multiple sets will stack up the Rune set Bonus. Available at
+    ... and ...
+  setIcon: {fileID: 21300000, guid: 2297eba50f7dcb040a23f8cf58a010fc, type: 3}
+  setColor: {r: 1, g: 1, b: 1, a: 1}
+  setBonuses:
+  - requiredPieces: 0
+    description: Energy 2 Set
+    bonusStats:
+    - statType: 0
+      value: 15
+      isPercentage: 1

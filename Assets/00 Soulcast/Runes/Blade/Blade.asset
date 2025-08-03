@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f6c98aef6708d34098c82ae3366d69c, type: 3}
+  m_Name: Blade
+  m_EditorClassIdentifier: 
+  setName: Blade
+  setDescription: Engraving 2 pieces of this Rune will increase the Monster's Critical
+    Rate by 12%. Equipping multiple sets will stack up the Rune set Bonus. Available
+    at ... and ...
+  setIcon: {fileID: 21300000, guid: 39eeb4a3c7124414186671eab3a7c3b6, type: 3}
+  setColor: {r: 1, g: 1, b: 1, a: 1}
+  setBonuses:
+  - requiredPieces: 0
+    description: Blade 2 Set
+    bonusStats:
+    - statType: 4
+      value: 12
+      isPercentage: 1
