@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 933cc04321299f048a6200e21f9d19c7
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 268895
+  packageName: Stylized Fantasy Fire Slime
+  packageVersion: 1.0
+  assetPath: Assets/StylizedFireSlime/Materials/PC/M_FireSlime_Gn.mat
+  uploadId: 622650

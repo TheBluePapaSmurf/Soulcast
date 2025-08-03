@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3fea75eaafe6db04ba0e0e077ad02af4
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 268895
+  packageName: Stylized Fantasy Fire Slime
+  packageVersion: 1.0
+  assetPath: Assets/StylizedFireSlime/Meshes/FireSlime.controller
+  uploadId: 622650
