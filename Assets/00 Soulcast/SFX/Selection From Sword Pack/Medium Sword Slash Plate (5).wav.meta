@@ -1,0 +1,29 @@
+fileFormatVersion: 2
+guid: 3ef4af28b98b4e047a22da33b6ff7c9b
+AudioImporter:
+  externalObjects: {}
+  serializedVersion: 6
+  defaultSettings:
+    loadType: 0
+    sampleRateSetting: 0
+    sampleRateOverride: 44100
+    compressionFormat: 1
+    quality: 1
+    conversionMode: 0
+  platformSettingOverrides: {}
+  forceToMono: 0
+  normalize: 1
+  preloadAudioData: 1
+  loadInBackground: 0
+  ambisonic: 0
+  3D: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 252854
+  packageName: Fantasy Match 3 Game Sound Effects Pack
+  packageVersion: 1.0
+  assetPath: Assets/FMatch3/Selection From Sword Pack/Medium Sword Slash Plate (5).wav
+  uploadId: 578276
