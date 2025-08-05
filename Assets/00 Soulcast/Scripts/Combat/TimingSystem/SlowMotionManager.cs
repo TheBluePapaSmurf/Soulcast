@@ -9,7 +9,6 @@ public class SlowMotionManager : MonoBehaviour
     public float transitionSpeed = 5f;
 
     private float originalTimeScale = 1f;
-    private bool isSlowMotion = false;
 
     void Awake()
     {
@@ -27,13 +26,11 @@ public class SlowMotionManager : MonoBehaviour
 
     public void ActivateSlowMotion()
     {
-        isSlowMotion = true;
         Time.timeScale = slowMotionScale;
     }
 
     public void DeactivateSlowMotion()
     {
-        isSlowMotion = false;
         Time.timeScale = originalTimeScale;
     }
 }

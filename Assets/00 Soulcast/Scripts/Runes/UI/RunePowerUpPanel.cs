@@ -250,7 +250,7 @@ public class RunePowerUpPanel : MonoBehaviour
         onPowerUpComplete?.Invoke();
 
         // Save the game to persist the changes
-        PlayerInventory.Instance.SaveToPlayerPrefs();
+        SaveManager.Instance?.SaveGame();
     }
 
     void ShowPowerUpResult(bool success)

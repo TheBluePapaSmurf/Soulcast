@@ -1,13 +1,25 @@
-﻿// ✅ NEW: SaveManager.cs - Helper script voor Easy Save 3 management
+﻿// Core/SaveManager.cs
 using UnityEngine;
+using System;
 
 public class SaveManager : MonoBehaviour
 {
-    [Header("Auto Save Settings")]
+    [Header("Save Settings")]
     public bool autoSaveEnabled = true;
     public float autoSaveInterval = 300f; // 5 minutes
 
+    [Header("File Settings")]
+    public string saveFileName = "PlayerSave.es3";
+
+    public const string SAVE_FILE = "PlayerSave.es3"; // Static reference for other scripts
+
     private float autoSaveTimer = 0f;
+
+    // Events
+    public static event Action OnSaveStarted;
+    public static event Action OnSaveCompleted;
+    public static event Action OnLoadStarted;
+    public static event Action OnLoadCompleted;
 
     public static SaveManager Instance { get; private set; }
 
@@ -17,11 +29,18 @@ public class SaveManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            Debug.Log("💾 SaveManager initialized and made persistent");
         }
         else
         {
             Destroy(gameObject);
         }
+    }
+
+    void Start()
+    {
+        // Auto-load game on start
+        LoadGame();
     }
 
     void Update()
@@ -37,37 +56,167 @@ public class SaveManager : MonoBehaviour
         }
     }
 
-    public void AutoSave()
-    {
-        if (PlayerInventory.Instance != null)
-        {
-            PlayerInventory.Instance.SaveGame();
-            Debug.Log("🔄 Auto-saved game");
-        }
-    }
+    // ========== SAVE SYSTEM ==========
 
-    public void ManualSave()
+    public void SaveGame()
     {
-        if (PlayerInventory.Instance != null)
+        try
         {
-            PlayerInventory.Instance.SaveGame();
-            Debug.Log("💾 Manual save completed");
+            OnSaveStarted?.Invoke();
+
+            Debug.Log("💾 Starting game save...");
+
+            // Save all managers
+            CurrencyManager.Instance?.SaveCurrency();
+            MonsterCollectionManager.Instance?.SaveMonsterCollection();
+            RuneCollectionManager.Instance?.SaveRuneCollection();
+
+            // Save metadata
+            SaveMetadata();
+
+            OnSaveCompleted?.Invoke();
+            Debug.Log("✅ Game saved successfully!");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"❌ Failed to save game: {e.Message}");
         }
     }
 
     public void LoadGame()
     {
-        if (PlayerInventory.Instance != null)
+        try
         {
-            PlayerInventory.Instance.LoadGame();
+            OnLoadStarted?.Invoke();
+
+            Debug.Log("📂 Starting game load...");
+
+            if (!ES3.FileExists(SAVE_FILE))
+            {
+                Debug.Log("📝 No save file found - initializing with default values");
+                InitializeNewGame();
+                return;
+            }
+
+            // Check save version for migration
+            string saveVersion = ES3.Load("SaveVersion", SAVE_FILE, "1.0");
+            if (saveVersion != "2.0")
+            {
+                Debug.Log("🔄 Migrating old save format...");
+                MigrateOldSave();
+                return;
+            }
+
+            // Load all managers
+            CurrencyManager.Instance?.LoadCurrency();
+            MonsterCollectionManager.Instance?.LoadMonsterCollection();
+            RuneCollectionManager.Instance?.LoadRuneCollection();
+
+            LoadMetadata();
+
+            OnLoadCompleted?.Invoke();
+            Debug.Log("✅ Game loaded successfully!");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"❌ Failed to load game: {e.Message}");
+            InitializeNewGame();
         }
     }
+
+    private void SaveMetadata()
+    {
+        ES3.Save("SaveVersion", "2.0", SAVE_FILE);
+        ES3.Save("LastSaveTime", DateTime.Now.ToBinary(), SAVE_FILE);
+        ES3.Save("TotalPlayTime", Time.time, SAVE_FILE);
+    }
+
+    private void LoadMetadata()
+    {
+        long lastSaveTime = ES3.Load("LastSaveTime", SAVE_FILE, DateTime.Now.ToBinary());
+        float totalPlayTime = ES3.Load("TotalPlayTime", SAVE_FILE, 0f);
+
+        Debug.Log($"📊 Last saved: {DateTime.FromBinary(lastSaveTime):yyyy-MM-dd HH:mm:ss}");
+        Debug.Log($"⏱️ Total play time: {totalPlayTime / 3600f:F1} hours");
+    }
+
+    // ========== AUTO SAVE ==========
+
+    public void AutoSave()
+    {
+        if (IsGameReadyForSave())
+        {
+            SaveGame();
+            Debug.Log("🔄 Auto-saved game");
+        }
+    }
+
+    private bool IsGameReadyForSave()
+    {
+        return CurrencyManager.Instance != null &&
+               MonsterCollectionManager.Instance != null &&
+               RuneCollectionManager.Instance != null;
+    }
+
+    // ========== INITIALIZATION ==========
+
+    private void InitializeNewGame()
+    {
+        Debug.Log("🆕 Initializing new game with default values");
+
+        // Trigger events for UI updates
+        OnLoadCompleted?.Invoke();
+    }
+
+    private void MigrateOldSave()
+    {
+        Debug.Log("🔄 Migration from old save format completed");
+
+        // Set new version and save
+        ES3.Save("SaveVersion", "2.0", SAVE_FILE);
+        SaveGame();
+    }
+
+    // ========== UTILITY ==========
+
+    public void DeleteSaveFile()
+    {
+        if (ES3.FileExists(SAVE_FILE))
+        {
+            ES3.DeleteFile(SAVE_FILE);
+            Debug.Log("🗑️ Save file deleted!");
+            InitializeNewGame();
+        }
+    }
+
+    public bool HasSaveFile()
+    {
+        return ES3.FileExists(SAVE_FILE);
+    }
+
+    public string GetSaveFileInfo()
+    {
+        if (!HasSaveFile()) return "No save file found";
+
+        try
+        {
+            long lastSaveTime = ES3.Load("LastSaveTime", SAVE_FILE, 0);
+            string saveVersion = ES3.Load("SaveVersion", SAVE_FILE, "Unknown");
+            return $"Version: {saveVersion}, Last saved: {DateTime.FromBinary(lastSaveTime):yyyy-MM-dd HH:mm:ss}";
+        }
+        catch
+        {
+            return "Save file corrupted";
+        }
+    }
+
+    // ========== EVENT HANDLERS ==========
 
     void OnApplicationPause(bool pauseStatus)
     {
         if (pauseStatus && autoSaveEnabled)
         {
-            AutoSave(); // Save when app is paused
+            AutoSave();
         }
     }
 
@@ -75,29 +224,18 @@ public class SaveManager : MonoBehaviour
     {
         if (!hasFocus && autoSaveEnabled)
         {
-            AutoSave(); // Save when app loses focus
+            AutoSave();
         }
     }
 
-    // For UI buttons
+    // ========== MANUAL CONTROLS ==========
+
     [ContextMenu("Save Game")]
-    public void SaveGameButton()
-    {
-        ManualSave();
-    }
+    public void ManualSave() => SaveGame();
 
     [ContextMenu("Load Game")]
-    public void LoadGameButton()
-    {
-        LoadGame();
-    }
+    public void ManualLoad() => LoadGame();
 
     [ContextMenu("Delete Save")]
-    public void DeleteSaveButton()
-    {
-        if (PlayerInventory.Instance != null)
-        {
-            PlayerInventory.Instance.DeleteSaveFile();
-        }
-    }
+    public void ManualDeleteSave() => DeleteSaveFile();
 }

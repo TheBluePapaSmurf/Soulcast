@@ -14,7 +14,6 @@ public class ElementIndicatorRotator : MonoBehaviour
 
     private Camera mainCamera;
     private float lastUpdateTime = 0f;
-    private bool isVisible = true;
 
     void Start()
     {

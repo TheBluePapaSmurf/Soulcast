@@ -1,6 +1,7 @@
+using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class MonsterDisplayCard : MonoBehaviour
 {
@@ -83,7 +84,8 @@ void CheckNewOrDuplicate()
     {
         if (PlayerInventory.Instance == null || gachaMonster.monsterData == null) return;
 
-        CollectedMonster existingMonster = PlayerInventory.Instance.GetMonster(gachaMonster.monsterData);
+        CollectedMonster existingMonster = PlayerInventory.Instance.GetAllMonsters()
+    .FirstOrDefault(m => m.monsterData == gachaMonster.monsterData);
 
         if (existingMonster == null)
         {

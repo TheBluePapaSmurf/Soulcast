@@ -24,7 +24,7 @@ public class Monster : MonoBehaviour
     public float meleeAttackDistance = 1.5f;
     public Vector3 originalPosition;
     public Quaternion originalRotation; // ADD THIS
-    private bool isMoving = false;
+
 
     [Header("Combat State")]
     public bool isPlayerControlled = true;
@@ -157,7 +157,6 @@ public class Monster : MonoBehaviour
 
     private IEnumerator PerformMeleeAttackWithMovement(MonsterAction action, Monster target)
     {
-        isMoving = true;
         Debug.Log($"{monsterData.monsterName} starting melee attack movement");
 
         // 1. Move towards target
@@ -191,7 +190,6 @@ public class Monster : MonoBehaviour
 
     private void CompleteTurn()
     {
-        isMoving = false;
         hasTakenTurn = true;
 
         Debug.Log($"{monsterData.monsterName} completed their turn");

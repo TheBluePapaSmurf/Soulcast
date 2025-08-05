@@ -49,7 +49,6 @@ public class TimingCircleManager : MonoBehaviour
     private List<TimingCircle.TimingResult> allTimingResults = new List<TimingCircle.TimingResult>();
     private int currentHitIndex = 0;
     private int totalHits = 1;
-    private bool isSequentialActive = false;
 
     // Original single timing
     private bool isSingleTimingActive = false;
@@ -138,7 +137,6 @@ public class TimingCircleManager : MonoBehaviour
             originalTimingCirclePanel.SetActive(false);
         }
 
-        isSequentialActive = true;
         StartCoroutine(ExecuteSequentialTimingSequence());
     }
 
@@ -218,8 +216,6 @@ public class TimingCircleManager : MonoBehaviour
                 yield return new WaitForSecondsRealtime(timeBetweenSequentialHits);
             }
         }
-
-        isSequentialActive = false;
 
         // Show final results
         yield return StartCoroutine(ShowFinalResults());
@@ -469,7 +465,6 @@ public class TimingCircleManager : MonoBehaviour
 
         allTimingResults.Clear();
         isSingleTimingActive = false;
-        isSequentialActive = false;
         currentSingleCompletionAction = null;
 
         if (feedbackCanvasGroup != null)
