@@ -6,8 +6,11 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/00 Soulcast/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
+    path: Assets/00 Soulcast/Scenes/_Init_Scene.unity
+    guid: 8d514df8b047e374ea7a60eb3a1f5fe9
+  - enabled: 1
+    path: Assets/00 Soulcast/Scenes/HUB.unity
+    guid: 30dcf5b235d80f949ac4494e0423fd0d
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
