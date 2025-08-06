@@ -62,6 +62,8 @@ public class SummonCutsceneManager : MonoBehaviour
     [Header("Component Management")]
     [SerializeField] private bool autoManageComponentStates = true;
     [SerializeField] private bool disableMainCameraDuringCutscene = true;
+    public bool IsCutscenePlaying => isCutscenePlaying;
+
 
     // Private variables
     private Vector3 originalCameraPosition;

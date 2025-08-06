@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using DG.Tweening;
 
 public class CameraController : MonoBehaviour
@@ -165,6 +165,16 @@ public class CameraController : MonoBehaviour
     {
         return isAtAltar;
     }
+
+    // 🆕 NEW: Property to check if camera is currently transitioning
+    public bool IsTransitioning
+    {
+        get
+        {
+            return cameraSequence != null && cameraSequence.IsActive() && cameraSequence.IsPlaying();
+        }
+    }
+
 
     void OnDisable()
     {

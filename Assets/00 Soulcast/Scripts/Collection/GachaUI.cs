@@ -64,7 +64,7 @@ public class GachaUI : MonoBehaviour
     private PlayerInventory playerInventory;
     private MonsterCollectionManager monsterCollectionManager;
     private CurrencyDisplayUI topPanelCurrencyUI;
-    private SummonCutsceneManager cutsceneManager; // 🆕 NEW
+    public SummonCutsceneManager cutsceneManager; // 🆕 NEW
 
     // State
     private int selectedPoolIndex = GachaManager.UNKNOWN_POOL_INDEX;
@@ -566,10 +566,27 @@ public class GachaUI : MonoBehaviour
         SetButtonsInteractable(true);
     }
 
-    // Rest of the methods remain the same...
     public void OpenGachaUI()
     {
-        if (isGachaUIOpen) return;
+        // Check if UI is already open
+        if (isGachaUIOpen)
+        {
+            if (showDebugLogs) Debug.Log("⚠️ Gacha UI is already open");
+            return;
+        }
+
+        // Check if cutscene is playing to prevent conflicts
+        if (cutsceneManager != null && cutsceneManager.IsCutscenePlaying)
+        {
+            if (showDebugLogs) Debug.Log("⚠️ Cannot open Gacha UI: Cutscene is currently playing");
+            return;
+        }
+
+        // 🆕 NEW: Disable altar interaction when opening GachaUI
+        if (AltarInteraction.Instance != null)
+        {
+            AltarInteraction.Instance.SetInteractionEnabled(false);
+        }
 
         if (showDebugLogs) Debug.Log("🎮 Opening Gacha UI...");
 
@@ -581,6 +598,18 @@ public class GachaUI : MonoBehaviour
         if (useCameraTransition && CameraController.Instance != null)
         {
             CameraController.Instance.MoveToAltar(() => {
+                // Double-check that no cutscene started during camera transition
+                if (cutsceneManager != null && cutsceneManager.IsCutscenePlaying)
+                {
+                    if (showDebugLogs) Debug.Log("⚠️ Cutscene started during camera transition, not opening Gacha UI");
+
+                    // 🆕 NEW: Re-enable interaction if we can't open UI
+                    if (AltarInteraction.Instance != null)
+                    {
+                        AltarInteraction.Instance.SetInteractionEnabled(true);
+                    }
+                    return;
+                }
                 ShowGachaPanel();
             });
         }
@@ -592,7 +621,13 @@ public class GachaUI : MonoBehaviour
 
     public void CloseGachaUI()
     {
-        if (!isGachaUIOpen) return;
+        Debug.Log($"🔴 CloseGachaUI called! isGachaUIOpen: {isGachaUIOpen}");
+
+        if (!isGachaUIOpen)
+        {
+            Debug.LogWarning("⚠️ CloseGachaUI: UI is already closed, returning early");
+            return;
+        }
 
         if (showDebugLogs) Debug.Log("🎮 Closing Gacha UI...");
         HideGachaPanel();
@@ -601,7 +636,19 @@ public class GachaUI : MonoBehaviour
         {
             CameraController.Instance.ReturnToDefault();
         }
+
+        // 🔧 UPDATED: Re-enable altar interaction and notify AltarInteraction
+        if (AltarInteraction.Instance != null)
+        {
+            Debug.Log("🔄 Notifying AltarInteraction that GachaUI is closed");
+            AltarInteraction.Instance.OnGachaUIClosed(); // This will re-enable interaction
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ AltarInteraction.Instance is null!");
+        }
     }
+
 
     void ShowGachaPanel()
     {

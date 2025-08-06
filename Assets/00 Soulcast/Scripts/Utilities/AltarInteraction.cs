@@ -1,10 +1,10 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using DG.Tweening;
 using System.Collections.Generic;
 using System.Collections;
-using UnityEngine.EventSystems; // ADD THIS for UI detection
+using UnityEngine.EventSystems;
 
 public class AltarInteraction : MonoBehaviour
 {
@@ -12,17 +12,33 @@ public class AltarInteraction : MonoBehaviour
     public RectTransform gachaButtonRow;
     public Canvas parentCanvas;
 
+    [Header("🆕 Main Buttons Management")]
+    [SerializeField] private GameObject mainButtons;
+    [SerializeField] private bool autoHideMainButtons = true;
+    [SerializeField] private bool animateMainButtons = true;
+    [SerializeField] private float mainButtonsAnimationDuration = 0.3f;
+    [SerializeField] private Ease mainButtonsAnimationEase = Ease.OutCubic;
+
+    [Header("🎮 GachaUI Integration")]
+    [SerializeField] private GachaUI gachaUI;
+    [SerializeField] private bool autoFindGachaUI = true;
+    [SerializeField] private bool autoHideGachaButtonsOnSummon = true;
+
+    [Header("🔒 Interaction Control")]
+    [SerializeField] private bool allowInteraction = true;
+    [SerializeField] private bool showInteractionBlockedFeedback = true;
+    [SerializeField] private float blockedClickCooldown = 0.5f;
+
+    [Header("🎬 Magic Aura Effect")]
+    [Tooltip("CFXR3 Magic Aura effect to sync with GachaButtonRow")]
+    public GameObject magicAuraEffect;
+    [SerializeField] private bool autoFindMagicAura = true;
+
     [Header("Layout Fix")]
     [Tooltip("Drag the invisible button that should ignore layout here")]
     public RectTransform layoutIgnoreButton;
 
-    [Header("Effects")]
-    [Tooltip("VFX effect to play continuously while UI is visible")]
-    public ParticleSystem continuousVFX;
-    [Tooltip("VFX effect to play once when altar is clicked")]
-    public ParticleSystem clickVFX;
-    [Tooltip("Alternative: GameObject with effects to activate")]
-    public GameObject clickEffectObject;
+    [Header("Audio")]
     [Tooltip("Audio clip for popup sound")]
     public AudioClip popupSoundClip;
     [Tooltip("Audio source to play sounds (if null, will use/create one on this object)")]
@@ -41,12 +57,16 @@ public class AltarInteraction : MonoBehaviour
     public float slideInDuration = 0.5f;
     public float buttonDelayInterval = 0.5f;
     public Ease slideInEase = Ease.OutBack;
-    public float hiddenYOffset = -300f; // Only Y offset, X stays same as layout
+    public float hiddenYOffset = -300f;
     public bool animateInReverseOrder = false;
 
     [Header("Input")]
     public InputActionReference clickAction;
 
+    [Header("Debug")]
+    [SerializeField] private bool showDebugLogs = false;
+
+    // Private variables
     private Camera playerCamera;
     private bool isUIVisible = false;
     private List<RectTransform> buttonTransforms = new List<RectTransform>();
@@ -54,9 +74,35 @@ public class AltarInteraction : MonoBehaviour
     private List<LayoutElement> buttonLayoutElements = new List<LayoutElement>();
     private Sequence animationSequence;
 
-    // Layout Group (kept active)
+    // Layout Group
     private HorizontalLayoutGroup horizontalLayoutGroup;
     private LayoutElement layoutIgnoreButtonElement;
+
+    // MainButtons management
+    private CanvasGroup mainButtonsCanvasGroup;
+    private Vector3 mainButtonsOriginalScale;
+
+    // UI state tracking
+    private bool gachaUIIsOpen = false;
+    private Button summonButton;
+
+    // Interaction blocking
+    private bool isInteractionBlocked = false;
+    private float lastBlockedClickTime = 0f;
+
+    public static AltarInteraction Instance { get; private set; }
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 
     void Start()
     {
@@ -70,7 +116,102 @@ public class AltarInteraction : MonoBehaviour
         if (parentCanvas == null)
             parentCanvas = FindAnyObjectByType<Canvas>();
 
-        // Setup audio source if not assigned
+        SetupMainButtonsReference();
+        SetupGachaUIIntegration();
+        SetupMagicAuraEffect();
+        SetupAudioSource();
+
+        InitializeUI();
+        EnableClickInput();
+    }
+
+    void SetupMainButtonsReference()
+    {
+        if (mainButtons == null)
+        {
+            mainButtons = GameObject.Find("MainButtons");
+            if (mainButtons == null)
+            {
+                Canvas canvas = FindAnyObjectByType<Canvas>();
+                if (canvas != null)
+                {
+                    Transform canvasTransform = canvas.transform;
+                    for (int i = 0; i < canvasTransform.childCount; i++)
+                    {
+                        Transform child = canvasTransform.GetChild(i);
+                        if (child.name == "MainButtons")
+                        {
+                            mainButtons = child.gameObject;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (mainButtons != null)
+        {
+            mainButtonsOriginalScale = mainButtons.transform.localScale;
+            mainButtonsCanvasGroup = mainButtons.GetComponent<CanvasGroup>();
+            if (mainButtonsCanvasGroup == null)
+            {
+                mainButtonsCanvasGroup = mainButtons.AddComponent<CanvasGroup>();
+            }
+
+            if (showDebugLogs) Debug.Log($"🎮 MainButtons reference setup complete: {mainButtons.name}");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ MainButtons GameObject not found! Auto-hide feature will be disabled.");
+            autoHideMainButtons = false;
+        }
+    }
+
+    void SetupGachaUIIntegration()
+    {
+        if (autoFindGachaUI && gachaUI == null)
+        {
+            gachaUI = FindAnyObjectByType<GachaUI>();
+            if (gachaUI == null)
+            {
+                Debug.LogWarning("⚠️ GachaUI not found! Button management may not work correctly.");
+            }
+        }
+
+        if (gachaButtonRow != null)
+        {
+            Transform summonBtnTransform = gachaButtonRow.Find("SummonBtn");
+            if (summonBtnTransform != null)
+            {
+                summonButton = summonBtnTransform.GetComponent<Button>();
+                if (summonButton != null)
+                {
+                    summonButton.onClick.AddListener(OnSummonButtonClicked);
+                    if (showDebugLogs) Debug.Log("✅ Summon button listener added");
+                }
+            }
+        }
+
+        if (showDebugLogs) Debug.Log($"🎮 GachaUI integration setup - GachaUI: {gachaUI != null}, SummonButton: {summonButton != null}");
+    }
+
+    void SetupMagicAuraEffect()
+    {
+        if (autoFindMagicAura && magicAuraEffect == null)
+        {
+            Transform magicAuraTransform = transform.Find("CFXR3 Magic Aura A (Runic)");
+            if (magicAuraTransform != null)
+            {
+                magicAuraEffect = magicAuraTransform.gameObject;
+                if (showDebugLogs) Debug.Log($"✅ Auto-found Magic Aura: {magicAuraEffect.name}");
+            }
+        }
+
+        if (showDebugLogs) Debug.Log($"🎬 Magic Aura Effect setup - Found: {magicAuraEffect != null}");
+    }
+
+    void SetupAudioSource()
+    {
         if (audioSource == null)
         {
             audioSource = GetComponent<AudioSource>();
@@ -78,31 +219,86 @@ public class AltarInteraction : MonoBehaviour
             {
                 audioSource = gameObject.AddComponent<AudioSource>();
                 audioSource.playOnAwake = false;
-                audioSource.spatialBlend = 1f; // 3D sound
+                audioSource.spatialBlend = 1f;
                 audioSource.volume = popupVolume;
             }
         }
+    }
 
-        // Ensure continuous VFX is stopped at start
-        if (continuousVFX != null)
+    void OnSummonButtonClicked()
+    {
+        if (!autoHideGachaButtonsOnSummon) return;
+
+        var cutsceneManager = SummonCutsceneManager.Instance;
+        if (cutsceneManager != null && cutsceneManager.IsCutscenePlaying)
         {
-            continuousVFX.Stop();
+            Debug.Log("⚠️ Cannot open Gacha UI: Cutscene is already playing");
+            return;
         }
 
-        InitializeUI();
-        EnableClickInput();
+        if (showDebugLogs) Debug.Log("🎮 Summon button clicked - hiding GachaButtonRow and opening GachaUI");
+
+        SetInteractionEnabled(false);
+        HideGachaUI();
+
+        if (gachaUI != null)
+        {
+            gachaUI.OpenGachaUI();
+            gachaUIIsOpen = true;
+        }
+    }
+
+    public void OnGachaUIClosed()
+    {
+        if (gachaUIIsOpen)
+        {
+            if (showDebugLogs) Debug.Log("🎮 GachaUI closed - re-enabling altar interaction and showing MainButtons");
+            gachaUIIsOpen = false;
+            SetInteractionEnabled(true);
+            ShowMainButtons();
+        }
+    }
+
+    public void SetInteractionEnabled(bool enabled)
+    {
+        isInteractionBlocked = !enabled;
+        allowInteraction = enabled;
+
+        if (showDebugLogs)
+        {
+            Debug.Log($"🔒 Altar interaction {(enabled ? "ENABLED" : "DISABLED")}");
+        }
+    }
+
+    public bool IsInteractionEnabled => allowInteraction && !isInteractionBlocked;
+
+    void ShowBlockedInteractionFeedback()
+    {
+        if (!showInteractionBlockedFeedback) return;
+
+        float currentTime = Time.time;
+        if (currentTime - lastBlockedClickTime < blockedClickCooldown) return;
+
+        lastBlockedClickTime = currentTime;
+
+        if (showDebugLogs)
+        {
+            Debug.Log("🔒 Altar interaction is currently blocked (GachaUI is open)");
+        }
     }
 
     private void Update()
     {
-        CheckForCloseClick();
+        if (isUIVisible && gachaButtonRow != null && gachaButtonRow.gameObject.activeSelf && !isInteractionBlocked)
+        {
+            CheckForCloseClick();
+        }
     }
 
     void InitializeUI()
     {
         if (gachaButtonRow != null)
         {
-            // Get reference to layout ignore button's LayoutElement
             if (layoutIgnoreButton != null)
             {
                 layoutIgnoreButtonElement = layoutIgnoreButton.GetComponent<LayoutElement>();
@@ -112,19 +308,15 @@ public class AltarInteraction : MonoBehaviour
                 }
             }
 
-            // BELANGRIJK: Activeer tijdelijk de container om layout posities te kunnen berekenen
             bool wasActive = gachaButtonRow.gameObject.activeSelf;
             gachaButtonRow.gameObject.SetActive(true);
 
-            // Get the horizontal layout group (keep it enabled)
             horizontalLayoutGroup = gachaButtonRow.GetComponent<HorizontalLayoutGroup>();
 
-            // Get all child buttons and add LayoutElements for position control
             buttonTransforms.Clear();
             originalLayoutPositions.Clear();
             buttonLayoutElements.Clear();
 
-            // Force layout to calculate positions first
             if (horizontalLayoutGroup != null)
             {
                 LayoutRebuilder.ForceRebuildLayoutImmediate(gachaButtonRow);
@@ -138,20 +330,16 @@ public class AltarInteraction : MonoBehaviour
 
                 if (buttonRect != null)
                 {
-                    // Skip the layout ignore button - don't animate it
                     if (layoutIgnoreButton != null && buttonRect == layoutIgnoreButton)
                     {
                         continue;
                     }
 
                     buttonTransforms.Add(buttonRect);
-
-                    // Store ORIGINAL layout-controlled positions and DON'T change them
                     originalLayoutPositions.Add(buttonRect.anchoredPosition);
 
-                    Debug.Log($"Button {i} ({buttonRect.name}) original position: {buttonRect.anchoredPosition}");
+                    if (showDebugLogs) Debug.Log($"Button {i} ({buttonRect.name}) original position: {buttonRect.anchoredPosition}");
 
-                    // Ensure each button has a LayoutElement for layout control
                     LayoutElement layoutElement = buttonRect.GetComponent<LayoutElement>();
                     if (layoutElement == null)
                     {
@@ -161,66 +349,82 @@ public class AltarInteraction : MonoBehaviour
                 }
             }
 
-            // Zet terug naar originele staat (meestal false)
             gachaButtonRow.gameObject.SetActive(wasActive);
         }
     }
 
     void PlayClickEffects()
     {
-        // Play one-time click VFX
-        if (clickVFX != null)
-        {
-            clickVFX.Play();
-            Debug.Log("Playing click VFX");
-        }
-
-        // Activate effect object
-        if (clickEffectObject != null)
-        {
-            clickEffectObject.SetActive(true);
-
-            Debug.Log("Activated click effect object");
-        }
-
-        // Play popup sound
         if (popupSoundClip != null && audioSource != null)
         {
             audioSource.volume = popupVolume;
             audioSource.PlayOneShot(popupSoundClip);
-            Debug.Log("Playing popup sound");
+            if (showDebugLogs) Debug.Log("🔊 Playing popup sound");
         }
     }
 
-    void StartContinuousVFX()
+    void HideMainButtons()
     {
-        // Start continuous VFX when UI becomes visible
-        if (continuousVFX != null)
+        if (!autoHideMainButtons || mainButtons == null || mainButtonsCanvasGroup == null) return;
+
+        if (showDebugLogs) Debug.Log("🔽 Hiding MainButtons");
+
+        if (animateMainButtons)
         {
-            continuousVFX.Play();
-            Debug.Log("Started continuous VFX");
+            mainButtonsCanvasGroup.DOFade(0f, mainButtonsAnimationDuration)
+                .SetEase(mainButtonsAnimationEase);
+
+            mainButtons.transform.DOScale(0.8f, mainButtonsAnimationDuration)
+                .SetEase(mainButtonsAnimationEase)
+                .OnComplete(() => {
+                    mainButtons.SetActive(false);
+                    if (showDebugLogs) Debug.Log("✅ MainButtons hidden");
+                });
+        }
+        else
+        {
+            mainButtons.SetActive(false);
+            if (showDebugLogs) Debug.Log("✅ MainButtons hidden instantly");
         }
     }
 
-    void StopContinuousVFX()
+    void ShowMainButtons()
     {
-        // Stop continuous VFX when UI is fully hidden
-        if (continuousVFX != null)
+        if (!autoHideMainButtons || mainButtons == null || mainButtonsCanvasGroup == null) return;
+
+        if (showDebugLogs) Debug.Log("🔼 Showing MainButtons");
+
+        if (animateMainButtons)
         {
-            continuousVFX.Stop();
-            Debug.Log("Stopped continuous VFX");
+            mainButtons.SetActive(true);
+            mainButtonsCanvasGroup.alpha = 0f;
+            mainButtons.transform.localScale = Vector3.one * 0.8f;
+
+            mainButtonsCanvasGroup.DOFade(1f, mainButtonsAnimationDuration)
+                .SetEase(mainButtonsAnimationEase);
+
+            mainButtons.transform.DOScale(mainButtonsOriginalScale, mainButtonsAnimationDuration)
+                .SetEase(mainButtonsAnimationEase)
+                .OnComplete(() => {
+                    if (showDebugLogs) Debug.Log("✅ MainButtons shown");
+                });
+        }
+        else
+        {
+            mainButtons.SetActive(true);
+            mainButtonsCanvasGroup.alpha = 1f;
+            mainButtons.transform.localScale = mainButtonsOriginalScale;
+            if (showDebugLogs) Debug.Log("✅ MainButtons shown instantly");
         }
     }
 
     void DisableLayoutControlForAnimatedButtons()
     {
-        // Disable layout control for animated buttons only
         for (int i = 0; i < buttonLayoutElements.Count; i++)
         {
             buttonLayoutElements[i].ignoreLayout = true;
         }
 
-        // Enable ignoreLayout for the layout ignore button (your fix)
         if (layoutIgnoreButtonElement != null)
         {
             layoutIgnoreButtonElement.ignoreLayout = true;
@@ -229,34 +433,30 @@ public class AltarInteraction : MonoBehaviour
 
     void SetButtonsToHiddenPositions()
     {
-        // Set to hidden position - buttons are already ignoring layout
         for (int i = 0; i < buttonTransforms.Count; i++)
         {
             Vector2 hiddenPos = new Vector2(
-                originalLayoutPositions[i].x,  // Keep exact X from ORIGINAL layout positions
-                originalLayoutPositions[i].y + hiddenYOffset  // Offset Y only
+                originalLayoutPositions[i].x,
+                originalLayoutPositions[i].y + hiddenYOffset
             );
             buttonTransforms[i].anchoredPosition = hiddenPos;
 
-            Debug.Log($"Button {i} hidden position: {hiddenPos}");
+            if (showDebugLogs) Debug.Log($"Button {i} hidden position: {hiddenPos}");
         }
     }
 
     void RestoreLayoutControl()
     {
-        // Re-enable layout control for animated buttons
         for (int i = 0; i < buttonLayoutElements.Count; i++)
         {
             buttonLayoutElements[i].ignoreLayout = false;
         }
 
-        // Keep the layout ignore button ignoring layout (your fix stays active)
         if (layoutIgnoreButtonElement != null)
         {
             layoutIgnoreButtonElement.ignoreLayout = true;
         }
 
-        // Force layout rebuild to restore proper positions
         if (horizontalLayoutGroup != null)
         {
             LayoutRebuilder.ForceRebuildLayoutImmediate(gachaButtonRow);
@@ -280,20 +480,37 @@ public class AltarInteraction : MonoBehaviour
             clickAction.action.Disable();
         }
 
-        // Kill any ongoing animations
         if (animationSequence != null)
         {
             animationSequence.Kill();
         }
 
-        // Stop continuous VFX when script is disabled
-        StopContinuousVFX();
+        if (summonButton != null)
+        {
+            summonButton.onClick.RemoveListener(OnSummonButtonClicked);
+        }
+
+        if (magicAuraEffect != null)
+        {
+            magicAuraEffect.SetActive(false);
+        }
+
+        if (autoHideMainButtons && !isUIVisible && !gachaUIIsOpen)
+        {
+            ShowMainButtons();
+        }
     }
 
     void OnClick(InputAction.CallbackContext context)
     {
         if (playerCamera == null) return;
 
+        if (isInteractionBlocked || !allowInteraction)
+        {
+            ShowBlockedInteractionFeedback();
+            return;
+        }
+
         Vector2 mousePosition = Mouse.current.position.ReadValue();
         Ray ray = playerCamera.ScreenPointToRay(mousePosition);
 
@@ -301,45 +518,34 @@ public class AltarInteraction : MonoBehaviour
         {
             if (hit.collider.gameObject == gameObject)
             {
-                // Play one-time effects when altar is clicked
                 PlayClickEffects();
                 ToggleGachaUI();
             }
         }
     }
 
-    // FIXED: Improved close click detection
     void CheckForCloseClick()
     {
-        if (!isUIVisible || !Mouse.current.leftButton.wasPressedThisFrame)
+        if (!Mouse.current.leftButton.wasPressedThisFrame)
             return;
 
-        // Check if mouse is over any UI element (including our buttons)
         bool isOverUI = EventSystem.current.IsPointerOverGameObject();
 
         if (isOverUI)
         {
-            // Mouse is over a UI element
             if (closeOnUIClick)
             {
-                Debug.Log("Closing UI: Clicked on UI element");
+                if (showDebugLogs) Debug.Log("Closing GachaButtonRow: Clicked on UI element");
                 HideGachaUI();
             }
-            else
-            {
-                Debug.Log("Not closing UI: Clicked on UI element, but closeOnUIClick is disabled");
-            }
             return;
         }
 
-        // Mouse is not over UI, check for outside clicks
         if (!closeOnOutsideClick)
         {
-            Debug.Log("Not closing UI: Outside click detected, but closeOnOutsideClick is disabled");
             return;
         }
 
-        // Check if clicking on the altar itself (don't close on altar clicks)
         Vector2 mousePosition = Mouse.current.position.ReadValue();
         Ray ray = playerCamera.ScreenPointToRay(mousePosition);
 
@@ -347,20 +553,22 @@ public class AltarInteraction : MonoBehaviour
         {
             if (hit.collider.gameObject == gameObject)
             {
-                // Clicked on the altar itself, don't close
-                Debug.Log("Not closing UI: Clicked on altar");
                 return;
             }
         }
 
-        // Clicked outside UI and not on altar
-        Debug.Log("Closing UI: Clicked outside");
+        if (showDebugLogs) Debug.Log("Closing GachaButtonRow: Clicked outside");
         HideGachaUI();
     }
 
     void OnMouseDown()
     {
-        // Play one-time effects when altar is clicked via OnMouseDown
+        if (isInteractionBlocked || !allowInteraction)
+        {
+            ShowBlockedInteractionFeedback();
+            return;
+        }
+
         PlayClickEffects();
         ToggleGachaUI();
     }
@@ -383,97 +591,82 @@ public class AltarInteraction : MonoBehaviour
     {
         if (gachaButtonRow == null || isUIVisible || buttonTransforms.Count == 0) return;
 
-        // Kill any ongoing animation
         if (animationSequence != null)
         {
             animationSequence.Kill();
         }
 
-        // Start coroutine voor stabiele layout handling
+        HideMainButtons();
         StartCoroutine(ShowGachaUICoroutine());
     }
 
     IEnumerator ShowGachaUICoroutine()
     {
-        // Start continuous VFX IMMEDIATELY when show starts
-        StartContinuousVFX();
-
-        // Disable layout control for animated buttons + enable ignore for layout fix button
         DisableLayoutControlForAnimatedButtons();
 
-        // Now safely activate the container 
         gachaButtonRow.gameObject.SetActive(true);
 
-        // Set buttons to hidden positions immediately
-        SetButtonsToHiddenPositions();
+        // 🎬 Activate Magic Aura at the same time as GachaButtonRow
+        if (magicAuraEffect != null)
+        {
+            magicAuraEffect.SetActive(true);
+            if (showDebugLogs) Debug.Log("🎬 Magic Aura activated with GachaButtonRow");
+        }
 
-        // Wait one frame for UI to stabilize in hidden positions
+        SetButtonsToHiddenPositions();
         yield return null;
 
-        // Start animatie sequence
         animationSequence = DOTween.Sequence();
 
-        // Animate each button with delay (normal or reverse order)
         if (animateInReverseOrder)
         {
-            // Animate in reverse order: last button first
             for (int i = buttonTransforms.Count - 1; i >= 0; i--)
             {
-                int buttonIndex = i; // Local copy voor closure
+                int buttonIndex = i;
 
-                // Add delay for each button after the first (in reverse order)
                 if (buttonIndex < buttonTransforms.Count - 1)
                 {
                     animationSequence.AppendInterval(buttonDelayInterval);
                 }
 
-                // Animate to ORIGINAL layout positions
                 animationSequence.Append(
                     buttonTransforms[buttonIndex].DOAnchorPos(originalLayoutPositions[buttonIndex], slideInDuration)
                         .SetEase(slideInEase)
                         .OnComplete(() => {
-                            Debug.Log($"Button {buttonIndex} reached target: {originalLayoutPositions[buttonIndex]}");
+                            if (showDebugLogs) Debug.Log($"Button {buttonIndex} reached target: {originalLayoutPositions[buttonIndex]}");
                         })
                 );
             }
         }
         else
         {
-            // Animate in normal order: first button first
             for (int i = 0; i < buttonTransforms.Count; i++)
             {
-                int buttonIndex = i; // Local copy voor closure
+                int buttonIndex = i;
 
-                // Add delay for each button after the first
                 if (buttonIndex > 0)
                 {
                     animationSequence.AppendInterval(buttonDelayInterval);
                 }
 
-                // Animate to ORIGINAL layout positions
                 animationSequence.Append(
                     buttonTransforms[buttonIndex].DOAnchorPos(originalLayoutPositions[buttonIndex], slideInDuration)
                         .SetEase(slideInEase)
                         .OnComplete(() => {
-                            Debug.Log($"Button {buttonIndex} reached target: {originalLayoutPositions[buttonIndex]}");
+                            if (showDebugLogs) Debug.Log($"Button {buttonIndex} reached target: {originalLayoutPositions[buttonIndex]}");
                         })
                 );
             }
         }
 
-        // Set UI as visible when animation completes
         animationSequence.OnComplete(() => {
-            // Set final positions manually first
             for (int i = 0; i < buttonTransforms.Count; i++)
             {
                 buttonTransforms[i].anchoredPosition = originalLayoutPositions[i];
             }
 
-            // THEN restore layout control (keeping layout ignore button ignored)
             RestoreLayoutControl();
             isUIVisible = true;
-
-            // VFX continues to loop here while UI is visible
         });
     }
 
@@ -481,66 +674,79 @@ public class AltarInteraction : MonoBehaviour
     {
         if (gachaButtonRow == null || !isUIVisible || buttonTransforms.Count == 0) return;
 
-        // Kill any ongoing animation
         if (animationSequence != null)
         {
             animationSequence.Kill();
         }
 
-        // Disable layout control for animation
         for (int i = 0; i < buttonLayoutElements.Count; i++)
         {
             buttonLayoutElements[i].ignoreLayout = true;
         }
 
-        // Create reverse animation sequence
         animationSequence = DOTween.Sequence();
 
-        // Hide animation always uses reverse order for nice visual effect
         for (int i = buttonTransforms.Count - 1; i >= 0; i--)
         {
-            int buttonIndex = i; // Local copy voor closure
+            int buttonIndex = i;
 
-            // Hidden position uses ORIGINAL layout positions
             Vector2 hiddenPos = new Vector2(
-                originalLayoutPositions[buttonIndex].x,  // Keep exact X from ORIGINAL layout positions
-                originalLayoutPositions[buttonIndex].y + hiddenYOffset  // Offset Y only
+                originalLayoutPositions[buttonIndex].x,
+                originalLayoutPositions[buttonIndex].y + hiddenYOffset
             );
 
-            // Add delay for each button after the first
             if (buttonIndex < buttonTransforms.Count - 1)
             {
-                animationSequence.AppendInterval(buttonDelayInterval * 0.3f); // Faster hide delay
+                animationSequence.AppendInterval(buttonDelayInterval * 0.3f);
             }
 
-            // Animate this button sliding out
             animationSequence.Append(
                 buttonTransforms[buttonIndex].DOAnchorPos(hiddenPos, slideInDuration * 0.7f)
                     .SetEase(Ease.InBack)
             );
         }
 
-        // Hide the container and reset state when animation completes
         animationSequence.OnComplete(() => {
             gachaButtonRow.gameObject.SetActive(false);
+
+            // 🎬 Deactivate Magic Aura at the same time as GachaButtonRow
+            if (magicAuraEffect != null)
+            {
+                magicAuraEffect.SetActive(false);
+                if (showDebugLogs) Debug.Log("🎬 Magic Aura deactivated with GachaButtonRow");
+            }
+
             RestoreLayoutControl();
             isUIVisible = false;
 
-            // STOP continuous VFX when hide animation is completely finished
-            StopContinuousVFX();
+            if (!gachaUIIsOpen)
+            {
+                ShowMainButtons();
+            }
         });
     }
 
-    // Method to instantly show/hide without animation (useful for testing)
+    // Essential Context Menu Methods Only
     [ContextMenu("Show UI Instantly")]
     public void ShowUIInstantly()
     {
         if (gachaButtonRow == null) return;
 
+        if (autoHideMainButtons && mainButtons != null)
+        {
+            mainButtons.SetActive(false);
+        }
+
         gachaButtonRow.gameObject.SetActive(true);
+
+        if (magicAuraEffect != null)
+        {
+            magicAuraEffect.SetActive(true);
+            if (showDebugLogs) Debug.Log("🎬 Magic Aura activated instantly with GachaButtonRow");
+        }
+
         RestoreLayoutControl();
         isUIVisible = true;
-        StartContinuousVFX(); // Start VFX for instant show
     }
 
     [ContextMenu("Hide UI Instantly")]
@@ -549,35 +755,24 @@ public class AltarInteraction : MonoBehaviour
         if (gachaButtonRow == null) return;
 
         gachaButtonRow.gameObject.SetActive(false);
+
+        if (magicAuraEffect != null)
+        {
+            magicAuraEffect.SetActive(false);
+            if (showDebugLogs) Debug.Log("🎬 Magic Aura deactivated instantly with GachaButtonRow");
+        }
+
         RestoreLayoutControl();
         isUIVisible = false;
-        StopContinuousVFX(); // Stop VFX for instant hide
-    }
 
-    // Runtime method to toggle animation order
-    [ContextMenu("Toggle Animation Order")]
-    public void ToggleAnimationOrder()
-    {
-        animateInReverseOrder = !animateInReverseOrder;
-        Debug.Log($"Animation order set to: {(animateInReverseOrder ? "Reverse" : "Normal")}");
-    }
-
-    // Test methods for effects
-    [ContextMenu("Test Click Effects")]
-    public void TestClickEffects()
-    {
-        PlayClickEffects();
-    }
-
-    [ContextMenu("Test Continuous VFX Start")]
-    public void TestStartContinuousVFX()
-    {
-        StartContinuousVFX();
-    }
-
-    [ContextMenu("Test Continuous VFX Stop")]
-    public void TestStopContinuousVFX()
-    {
-        StopContinuousVFX();
+        if (autoHideMainButtons && mainButtons != null && !gachaUIIsOpen)
+        {
+            mainButtons.SetActive(true);
+            if (mainButtonsCanvasGroup != null)
+            {
+                mainButtonsCanvasGroup.alpha = 1f;
+            }
+            mainButtons.transform.localScale = mainButtonsOriginalScale;
+        }
     }
 }
