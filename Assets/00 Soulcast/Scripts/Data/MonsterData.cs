@@ -19,6 +19,7 @@ public class MonsterData : ScriptableObject
     public GameObject modelPrefab;
 
     [Header("Level & Experience System")]
+    public int defaultLevel = 1;
     public int maxLevel = 60;
     public int baseExperienceRequired = 100;
     public float experienceGrowthRate = 1.5f;

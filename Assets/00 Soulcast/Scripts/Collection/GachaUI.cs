@@ -2,57 +2,72 @@
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
-using System.Collections.Generic;
 
 public class GachaUI : MonoBehaviour
 {
     [Header("UI Panels")]
-    public GameObject mainGachaPanel;        // Assign MainGachaUI
-    public GameObject inventoryMainPanel;    // Assign InventoryMainPanel
+    public GameObject mainGachaPanel;
+    public GameObject inventoryMainPanel;
     public MonsterInventoryUI inventoryUI;
 
-    [Header("UI References")]
-    public TextMeshProUGUI currencyText;
-    public TextMeshProUGUI titleText;
+    [Header("Pool Selection UI")]
+    [SerializeField] private Button unknownPoolButton;
+    [SerializeField] private Button mythicalPoolButton;
+    [SerializeField] private GameObject unknownPoolInfo;
+    [SerializeField] private GameObject mythicalPoolInfo;
+    [SerializeField] private TextMeshProUGUI selectedPoolTitle;
+    [SerializeField] private TextMeshProUGUI selectedPoolDescription;
+
+    [Header("Summon Buttons")]
     public Button singleSummonButton;
     public Button multiSummonButton;
     public Button collectionButton;
-    public TMP_Dropdown poolDropdown;
 
     [Header("Cost Display")]
     public TextMeshProUGUI singleSummonCostText;
     public TextMeshProUGUI multiSummonCostText;
 
-    [Header("Panels")]
+    [Header("Currency Display")]
+    public TextMeshProUGUI currencyText; // Local currency display (optional)
+    [SerializeField] private bool useLocalCurrencyDisplay = false; // Use TopPanel instead
+    [SerializeField] private bool showSoulCoinsInGachaUI = true;
+
+    [Header("Other UI")]
+    public TextMeshProUGUI titleText;
     public GameObject mainPanel;
     public GameObject resultPanel;
     public SummonResultUI summonResultUI;
+    public Button closeButton;
 
     [Header("Audio")]
     public AudioSource audioSource;
     public AudioClip summonSound;
     public AudioClip multiSummonSound;
+    public AudioClip poolSwitchSound;
 
     [Header("Camera Integration")]
-    [Tooltip("Should the camera move to altar when opening Gacha UI?")]
     public bool useCameraTransition = true;
 
-    [Header("Close Button")]
-    [Tooltip("Button to close the Gacha UI and return camera")]
-    public Button closeButton;
+    [Header("🎬 Cutscene Settings")] // 🆕 NEW
+    [SerializeField] private bool useCutsceneForSingleSummon = true;
+    [SerializeField] private bool useCutsceneForMultiSummon = false; // Keep false for performance
+    [SerializeField] private bool showCutsceneDebugLogs = true;
 
     [Header("Manager Connection")]
     [SerializeField] private bool autoFindManagers = true;
     [SerializeField] private float managerSearchTimeout = 10f;
     [SerializeField] private bool showDebugLogs = false;
 
-    // 🆕 UPDATED: Use the new manager system
+    // Manager references
     private GachaManager gachaManager;
-    private CurrencyManager currencyManager; // Use CurrencyManager instead of PlayerInventory for currency
-    private PlayerInventory playerInventory;  // Still needed for adding monsters
+    private CurrencyManager currencyManager;
+    private PlayerInventory playerInventory;
     private MonsterCollectionManager monsterCollectionManager;
+    private CurrencyDisplayUI topPanelCurrencyUI;
+    private SummonCutsceneManager cutsceneManager; // 🆕 NEW
 
-    private int selectedPoolIndex = 0;
+    // State
+    private int selectedPoolIndex = GachaManager.UNKNOWN_POOL_INDEX;
     private bool isGachaUIOpen = false;
     private bool managersInitialized = false;
 
@@ -61,21 +76,18 @@ public class GachaUI : MonoBehaviour
         StartCoroutine(InitializeGachaUI());
     }
 
-    // 🆕 NEW: Robust initialization system
     private IEnumerator InitializeGachaUI()
     {
         if (showDebugLogs) Debug.Log("🎮 GachaUI: Starting initialization...");
 
-        // Wait for managers to be available
         yield return StartCoroutine(WaitForManagers());
 
-        // Initialize UI components
         InitializeReferences();
         SetupButtons();
-        SetupDropdown();
+        SetupPoolSelection();
+        SelectPool(GachaManager.UNKNOWN_POOL_INDEX);
         UpdateUI();
 
-        // Ensure the main gacha panel is hidden at start
         if (mainGachaPanel != null)
         {
             mainGachaPanel.SetActive(false);
@@ -85,7 +97,6 @@ public class GachaUI : MonoBehaviour
         if (showDebugLogs) Debug.Log("✅ GachaUI: Initialization complete!");
     }
 
-    // 🆕 NEW: Wait for persistent managers to be loaded
     private IEnumerator WaitForManagers()
     {
         float timeout = managerSearchTimeout;
@@ -93,19 +104,16 @@ public class GachaUI : MonoBehaviour
 
         while (elapsedTime < timeout)
         {
-            // Check if all required managers are available
             bool managersReady = true;
 
             if (autoFindManagers)
             {
-                // Find scene-specific manager (GachaManager)
                 if (gachaManager == null)
                 {
                     gachaManager = FindAnyObjectByType<GachaManager>();
                     if (gachaManager == null) managersReady = false;
                 }
 
-                // Find persistent managers
                 if (currencyManager == null)
                 {
                     currencyManager = CurrencyManager.Instance;
@@ -123,49 +131,42 @@ public class GachaUI : MonoBehaviour
                     monsterCollectionManager = MonsterCollectionManager.Instance;
                     if (monsterCollectionManager == null) managersReady = false;
                 }
+
+                if (topPanelCurrencyUI == null)
+                {
+                    topPanelCurrencyUI = FindAnyObjectByType<CurrencyDisplayUI>();
+                }
+
+                // 🆕 NEW: Find cutscene manager
+                if (cutsceneManager == null)
+                {
+                    cutsceneManager = SummonCutsceneManager.Instance;
+                    if (cutsceneManager == null)
+                    {
+                        cutsceneManager = FindAnyObjectByType<SummonCutsceneManager>();
+                    }
+                }
             }
 
-            if (managersReady)
-            {
-                if (showDebugLogs) Debug.Log("✅ GachaUI: All managers found!");
-                break;
-            }
+            if (managersReady) break;
 
             yield return new WaitForSeconds(0.1f);
             elapsedTime += 0.1f;
         }
 
-        // Final check and error reporting
-        if (gachaManager == null)
+        if (showCutsceneDebugLogs)
         {
-            Debug.LogError("❌ GachaUI: GachaManager not found! Make sure it exists in this scene.");
-        }
-
-        if (currencyManager == null)
-        {
-            Debug.LogError("❌ GachaUI: CurrencyManager not found! Make sure the init scene loaded properly.");
-        }
-
-        if (playerInventory == null)
-        {
-            Debug.LogError("❌ GachaUI: PlayerInventory not found! Make sure the init scene loaded properly.");
-        }
-
-        if (monsterCollectionManager == null)
-        {
-            Debug.LogError("❌ GachaUI: MonsterCollectionManager not found! Make sure the init scene loaded properly.");
+            Debug.Log($"🎬 GachaUI: Cutscene Manager found: {cutsceneManager != null}");
         }
     }
 
     void InitializeReferences()
     {
-        // Managers should already be found by WaitForManagers
         if (showDebugLogs)
         {
             Debug.Log($"🔧 GachaUI References - GachaManager: {gachaManager != null}, " +
                      $"CurrencyManager: {currencyManager != null}, " +
-                     $"PlayerInventory: {playerInventory != null}, " +
-                     $"MonsterCollection: {monsterCollectionManager != null}");
+                     $"CutsceneManager: {cutsceneManager != null}");
         }
     }
 
@@ -186,32 +187,119 @@ public class GachaUI : MonoBehaviour
             collectionButton.onClick.AddListener(OnCollectionClicked);
         }
 
-        // Setup close button
         if (closeButton != null)
         {
             closeButton.onClick.AddListener(CloseGachaUI);
         }
+    }
 
-        // Set cost text using GachaManager
-        if (singleSummonCostText != null && gachaManager != null)
+    void SetupPoolSelection()
+    {
+        if (unknownPoolButton != null)
         {
-            singleSummonCostText.text = $"Cost: {gachaManager.singleSummonCost}";
+            unknownPoolButton.onClick.AddListener(() => SelectPool(GachaManager.UNKNOWN_POOL_INDEX));
         }
 
-        if (multiSummonCostText != null && gachaManager != null)
+        if (mythicalPoolButton != null)
         {
-            multiSummonCostText.text = $"Cost: {gachaManager.multiSummonCost}";
+            mythicalPoolButton.onClick.AddListener(() => SelectPool(GachaManager.MYTHICAL_POOL_INDEX));
         }
     }
 
-    void SetupDropdown()
+    public void SelectPool(int poolIndex)
     {
-        if (poolDropdown == null || gachaManager == null) return;
+        if (gachaManager == null) return;
 
-        poolDropdown.ClearOptions();
-        List<string> poolNames = gachaManager.GetPoolNames();
-        poolDropdown.AddOptions(poolNames);
-        poolDropdown.onValueChanged.AddListener(OnPoolSelectionChanged);
+        selectedPoolIndex = poolIndex;
+        UpdatePoolButtonVisuals();
+        UpdatePoolInfoDisplay();
+        UpdateCostDisplay();
+
+        if (audioSource != null && poolSwitchSound != null)
+        {
+            audioSource.PlayOneShot(poolSwitchSound);
+        }
+
+        if (showDebugLogs)
+        {
+            string poolName = poolIndex == GachaManager.UNKNOWN_POOL_INDEX ? "Unknown" : "Mythical";
+            Debug.Log($"🎯 Selected {poolName} Pool");
+        }
+    }
+
+    void UpdatePoolButtonVisuals()
+    {
+        if (unknownPoolButton != null)
+        {
+            var colors = unknownPoolButton.colors;
+            colors.normalColor = selectedPoolIndex == GachaManager.UNKNOWN_POOL_INDEX ?
+                new Color(0.2f, 0.8f, 0.2f) : Color.white;
+            unknownPoolButton.colors = colors;
+        }
+
+        if (mythicalPoolButton != null)
+        {
+            var colors = mythicalPoolButton.colors;
+            colors.normalColor = selectedPoolIndex == GachaManager.MYTHICAL_POOL_INDEX ?
+                new Color(0.8f, 0.2f, 0.8f) : Color.white;
+            mythicalPoolButton.colors = colors;
+        }
+    }
+
+    void UpdatePoolInfoDisplay()
+    {
+        if (gachaManager == null) return;
+
+        var pool = gachaManager.GetPool(selectedPoolIndex);
+        if (pool == null) return;
+
+        if (selectedPoolTitle != null)
+        {
+            selectedPoolTitle.text = pool.poolName;
+        }
+
+        if (selectedPoolDescription != null)
+        {
+            selectedPoolDescription.text = pool.description;
+        }
+
+        if (unknownPoolInfo != null)
+        {
+            unknownPoolInfo.SetActive(selectedPoolIndex == GachaManager.UNKNOWN_POOL_INDEX);
+        }
+
+        if (mythicalPoolInfo != null)
+        {
+            mythicalPoolInfo.SetActive(selectedPoolIndex == GachaManager.MYTHICAL_POOL_INDEX);
+        }
+    }
+
+    void UpdateCostDisplay()
+    {
+        if (gachaManager == null) return;
+
+        int singleCost, multiCost;
+
+        if (selectedPoolIndex == GachaManager.UNKNOWN_POOL_INDEX)
+        {
+            singleCost = gachaManager.UnknownSingleCost;
+            multiCost = gachaManager.UnknownMultiCost;
+        }
+        else
+        {
+            singleCost = gachaManager.MythicalSingleCost;
+            multiCost = gachaManager.MythicalMultiCost;
+        }
+
+        if (singleSummonCostText != null)
+        {
+            singleSummonCostText.text = $"Soul Cast Cost: {singleCost:N0}";
+        }
+
+        if (multiSummonCostText != null)
+        {
+            multiSummonCostText.text = $"Multi Cast Cost: {multiCost:N0}";
+        }
     }
 
     void Update()
@@ -222,20 +310,32 @@ public class GachaUI : MonoBehaviour
         }
     }
 
-    // 🆕 UPDATED: Use CurrencyManager for currency display
     void UpdateUI()
     {
-        // Update currency display - use Crystals instead of Soul Coins for gacha
-        if (currencyManager != null && currencyText != null)
+        if (useLocalCurrencyDisplay && showSoulCoinsInGachaUI && currencyManager != null && currencyText != null)
         {
-            currencyText.text = $"Crystals: {currencyManager.GetCrystals():N0}";
+            currencyText.text = $"Soul Coins: {currencyManager.GetSoulCoins():N0}";
+        }
+
+        if (topPanelCurrencyUI != null)
+        {
+            topPanelCurrencyUI.RefreshDisplay();
         }
 
         if (gachaManager != null && currencyManager != null)
         {
-            // Update button interactability based on crystal currency
-            bool canAffordSingle = currencyManager.CanAffordCrystals(gachaManager.singleSummonCost);
-            bool canAffordMulti = currencyManager.CanAffordCrystals(gachaManager.multiSummonCost);
+            bool canAffordSingle, canAffordMulti;
+
+            if (selectedPoolIndex == GachaManager.UNKNOWN_POOL_INDEX)
+            {
+                canAffordSingle = gachaManager.CanAffordUnknownSummon(false);
+                canAffordMulti = gachaManager.CanAffordUnknownSummon(true);
+            }
+            else
+            {
+                canAffordSingle = gachaManager.CanAffordMythicalSummon(false);
+                canAffordMulti = gachaManager.CanAffordMythicalSummon(true);
+            }
 
             if (singleSummonButton != null)
             {
@@ -246,43 +346,259 @@ public class GachaUI : MonoBehaviour
             {
                 multiSummonButton.interactable = canAffordMulti;
             }
+
+            UpdateButtonVisualFeedback(canAffordSingle, canAffordMulti);
         }
     }
 
-    // Method to open the Gacha UI with camera transition
+    void UpdateButtonVisualFeedback(bool canAffordSingle, bool canAffordMulti)
+    {
+        if (singleSummonButton != null)
+        {
+            var singleColors = singleSummonButton.colors;
+            singleColors.disabledColor = canAffordSingle ? Color.white : new Color(0.7f, 0.3f, 0.3f);
+            singleSummonButton.colors = singleColors;
+        }
+
+        if (multiSummonButton != null)
+        {
+            var multiColors = multiSummonButton.colors;
+            multiColors.disabledColor = canAffordMulti ? Color.white : new Color(0.7f, 0.3f, 0.3f);
+            multiSummonButton.colors = multiColors;
+        }
+    }
+
+    // 🎬 UPDATED: Single summon with cutscene integration
+    public void OnSingleSummonClicked()
+    {
+        if (gachaManager == null || !managersInitialized) return;
+
+        if (!CheckCurrentAffordability(false))
+        {
+            ShowInsufficientFundsMessage(false);
+            return;
+        }
+
+        if (showCutsceneDebugLogs) Debug.Log("🎬 Starting single summon with cutscene...");
+
+        // 🎬 NEW: Use cutscene for single summon
+        if (useCutsceneForSingleSummon && cutsceneManager != null)
+        {
+            StartCoroutine(PerformSingleSummonWithCutscene());
+        }
+        else
+        {
+            // Fallback to normal summon
+            StartCoroutine(PerformSummonWithAnimation(false));
+        }
+    }
+
+    // 🔧 FIXED: Multi summon affordability check
+    public void OnMultiSummonClicked()
+    {
+        if (gachaManager == null || !managersInitialized) return;
+
+        if (!CheckCurrentAffordability(true)) // 🔧 FIXED: Use true for multi
+        {
+            ShowInsufficientFundsMessage(true); // 🔧 FIXED: Use true for multi
+            return;
+        }
+
+        // Multi summon always uses normal animation (no cutscene for performance)
+        StartCoroutine(PerformSummonWithAnimation(true));
+    }
+
+    // 🎬 NEW: Single summon with cutscene
+    IEnumerator PerformSingleSummonWithCutscene()
+    {
+        SetButtonsInteractable(false);
+
+        if (showCutsceneDebugLogs) Debug.Log("🎬 Performing summon through GachaManager...");
+
+        // Perform the actual summon first
+        GachaSummonResult result;
+        if (selectedPoolIndex == GachaManager.UNKNOWN_POOL_INDEX)
+        {
+            result = gachaManager.PerformUnknownSummon(false);
+        }
+        else
+        {
+            result = gachaManager.PerformMythicalSummon(false);
+        }
+
+        if (result.success && result.summonedMonsters.Count > 0)
+        {
+            if (showCutsceneDebugLogs) Debug.Log($"🎬 Summon successful! Starting cutscene for {result.summonedMonsters[0].monsterData.name}");
+
+            // Hide main gacha panel for cutscene
+            if (mainGachaPanel != null)
+            {
+                mainGachaPanel.SetActive(false);
+            }
+
+            // Start cutscene with the summoned monster
+            bool cutsceneCompleted = false;
+            cutsceneManager.StartSummonCutscene(result.summonedMonsters[0], () => {
+                // Callback when cutscene ends
+                cutsceneCompleted = true;
+                if (showCutsceneDebugLogs) Debug.Log("🎬 Cutscene completed, returning to gacha UI");
+
+                // Return to gacha UI
+                if (mainGachaPanel != null)
+                {
+                    mainGachaPanel.SetActive(true);
+                }
+
+                SetButtonsInteractable(true);
+
+                // Refresh currency display
+                if (topPanelCurrencyUI != null)
+                {
+                    topPanelCurrencyUI.RefreshDisplay();
+                }
+            });
+
+            // Wait for cutscene to complete
+            while (!cutsceneCompleted)
+            {
+                yield return null;
+            }
+        }
+        else
+        {
+            // Handle summon failure
+            ShowErrorMessage(result.errorMessage);
+            SetButtonsInteractable(true);
+        }
+    }
+
+    bool CheckCurrentAffordability(bool isMulti)
+    {
+        if (currencyManager == null) return false;
+
+        if (selectedPoolIndex == GachaManager.UNKNOWN_POOL_INDEX)
+        {
+            return gachaManager.CanAffordUnknownSummon(isMulti);
+        }
+        else
+        {
+            return gachaManager.CanAffordMythicalSummon(isMulti);
+        }
+    }
+
+    void ShowInsufficientFundsMessage(bool isMulti)
+    {
+        int requiredCost;
+        if (selectedPoolIndex == GachaManager.UNKNOWN_POOL_INDEX)
+        {
+            requiredCost = isMulti ? gachaManager.UnknownMultiCost : gachaManager.UnknownSingleCost;
+        }
+        else
+        {
+            requiredCost = isMulti ? gachaManager.MythicalMultiCost : gachaManager.MythicalSingleCost;
+        }
+
+        int currentSoulCoins = currencyManager.GetSoulCoins();
+        int needed = requiredCost - currentSoulCoins;
+
+        string message = $"Insufficient Soul Coins!\nRequired: {requiredCost:N0}\nCurrent: {currentSoulCoins:N0}\nNeed: {needed:N0} more";
+
+        if (showDebugLogs)
+        {
+            Debug.Log($"💰 {message}");
+        }
+
+        ShowErrorMessage(message);
+    }
+
+    // 🔧 UPDATED: Normal summon animation (for multi-summon and fallback)
+    IEnumerator PerformSummonWithAnimation(bool isMulti)
+    {
+        SetButtonsInteractable(false);
+
+        if (audioSource != null)
+        {
+            AudioClip clipToPlay = isMulti ? multiSummonSound : summonSound;
+            if (clipToPlay != null)
+            {
+                audioSource.PlayOneShot(clipToPlay);
+            }
+        }
+
+        if (titleText != null)
+        {
+            string poolName = selectedPoolIndex == GachaManager.UNKNOWN_POOL_INDEX ? "Unknown" : "Mythical";
+            titleText.text = isMulti ? $"Summoning 10 {poolName} Monsters..." : $"Summoning {poolName} Monster...";
+        }
+
+        yield return new WaitForSeconds(1.5f);
+
+        // Perform pool-specific summon
+        GachaSummonResult result;
+        if (selectedPoolIndex == GachaManager.UNKNOWN_POOL_INDEX)
+        {
+            result = gachaManager.PerformUnknownSummon(isMulti);
+        }
+        else
+        {
+            result = gachaManager.PerformMythicalSummon(isMulti);
+        }
+
+        if (titleText != null)
+        {
+            titleText.text = "Monster Summoning";
+        }
+
+        if (result.success)
+        {
+            ShowSummonResults(result);
+
+            if (topPanelCurrencyUI != null)
+            {
+                topPanelCurrencyUI.RefreshDisplay();
+            }
+        }
+        else
+        {
+            ShowErrorMessage(result.errorMessage);
+        }
+
+        SetButtonsInteractable(true);
+    }
+
+    // Rest of the methods remain the same...
     public void OpenGachaUI()
     {
         if (isGachaUIOpen) return;
 
         if (showDebugLogs) Debug.Log("🎮 Opening Gacha UI...");
 
+        if (topPanelCurrencyUI != null)
+        {
+            topPanelCurrencyUI.RefreshDisplay();
+        }
+
         if (useCameraTransition && CameraController.Instance != null)
         {
-            // Move camera to altar first, then show UI
             CameraController.Instance.MoveToAltar(() => {
                 ShowGachaPanel();
             });
         }
         else
         {
-            // Just show UI without camera movement
             ShowGachaPanel();
         }
     }
 
-    // Method to close the Gacha UI with camera return
     public void CloseGachaUI()
     {
         if (!isGachaUIOpen) return;
 
         if (showDebugLogs) Debug.Log("🎮 Closing Gacha UI...");
-
-        // Hide UI first
         HideGachaPanel();
 
         if (useCameraTransition && CameraController.Instance != null)
         {
-            // Return camera to default position
             CameraController.Instance.ReturnToDefault();
         }
     }
@@ -306,84 +622,17 @@ public class GachaUI : MonoBehaviour
             if (showDebugLogs) Debug.Log("✅ Gacha UI Panel closed");
         }
 
-        // Also hide result panel if open
         if (resultPanel != null)
         {
             resultPanel.SetActive(false);
         }
     }
 
-    public void OnSingleSummonClicked()
-    {
-        if (gachaManager == null || !managersInitialized) return;
-
-        StartCoroutine(PerformSummonWithAnimation(false));
-    }
-
-    public void OnMultiSummonClicked()
-    {
-        if (gachaManager == null || !managersInitialized) return;
-
-        StartCoroutine(PerformSummonWithAnimation(true));
-    }
-
-    IEnumerator PerformSummonWithAnimation(bool isMulti)
-    {
-        // Disable buttons during summon
-        SetButtonsInteractable(false);
-
-        // Play summon sound
-        if (audioSource != null)
-        {
-            AudioClip clipToPlay = isMulti ? multiSummonSound : summonSound;
-            if (clipToPlay != null)
-            {
-                audioSource.PlayOneShot(clipToPlay);
-            }
-        }
-
-        // Show summoning animation
-        if (titleText != null)
-        {
-            titleText.text = isMulti ? "Summoning 10 Monsters..." : "Summoning Monster...";
-        }
-
-        // Wait for animation
-        yield return new WaitForSeconds(1.5f);
-
-        // Perform actual summon
-        GachaSummonResult result = isMulti
-            ? gachaManager.PerformMultiSummon(selectedPoolIndex)
-            : gachaManager.PerformSingleSummon(selectedPoolIndex);
-
-        // Reset title
-        if (titleText != null)
-        {
-            titleText.text = "Monster Summoning";
-        }
-
-        // Show results
-        if (result.success)
-        {
-            ShowSummonResults(result);
-        }
-        else
-        {
-            ShowErrorMessage(result.errorMessage);
-        }
-
-        // Re-enable buttons
-        SetButtonsInteractable(true);
-    }
-
     void ShowSummonResults(GachaSummonResult result)
     {
         if (summonResultUI != null)
         {
-            // Keep mainPanel visible, show result panel on top
             resultPanel.SetActive(true);
-
-            // Display results
             StartCoroutine(DisplayResultsAfterFrame(result));
         }
         else
@@ -394,50 +643,30 @@ public class GachaUI : MonoBehaviour
 
     IEnumerator DisplayResultsAfterFrame(GachaSummonResult result)
     {
-        // Wait one frame to ensure the ResultPanel is fully active
         yield return null;
-
-        // Now display the results
         summonResultUI.DisplayResults(result);
     }
 
     void ShowErrorMessage(string message)
     {
         Debug.LogError($"❌ Summon Error: {message}");
-        // You can add a popup or notification UI here
     }
 
     public void OnCollectionClicked()
     {
-        // Hide the main gacha panel
         if (mainGachaPanel != null)
         {
             mainGachaPanel.SetActive(false);
         }
 
-        // Show the inventory panel
         if (inventoryMainPanel != null)
         {
             inventoryMainPanel.SetActive(true);
 
-            // Refresh the inventory to show latest monsters
             if (inventoryUI != null)
             {
                 inventoryUI.LoadMonsterCollection();
             }
-        }
-        else
-        {
-            Debug.LogError("❌ InventoryMainPanel reference not assigned in GachaUI!");
-        }
-    }
-
-    void OnPoolSelectionChanged(int poolIndex)
-    {
-        selectedPoolIndex = poolIndex;
-        if (showDebugLogs && gachaManager != null)
-        {
-            Debug.Log($"🎯 Selected pool: {gachaManager.GetPoolNames()[poolIndex]}");
         }
     }
 
@@ -446,6 +675,8 @@ public class GachaUI : MonoBehaviour
         if (singleSummonButton != null) singleSummonButton.interactable = interactable;
         if (multiSummonButton != null) multiSummonButton.interactable = interactable;
         if (collectionButton != null) collectionButton.interactable = interactable;
+        if (unknownPoolButton != null) unknownPoolButton.interactable = interactable;
+        if (mythicalPoolButton != null) mythicalPoolButton.interactable = interactable;
     }
 
     public void ReturnToMainPanel()
@@ -456,7 +687,6 @@ public class GachaUI : MonoBehaviour
         }
     }
 
-    // 🆕 NEW: Public method to refresh connections (useful for debugging)
     [ContextMenu("Refresh Manager Connections")]
     public void RefreshManagerConnections()
     {
@@ -465,16 +695,26 @@ public class GachaUI : MonoBehaviour
         StartCoroutine(InitializeGachaUI());
     }
 
-    // Context menu for testing
-    [ContextMenu("Test Open Gacha UI")]
-    public void TestOpenGachaUI()
+    [ContextMenu("Refresh Currency Display")]
+    public void RefreshCurrencyDisplay()
     {
-        OpenGachaUI();
+        if (topPanelCurrencyUI != null)
+        {
+            topPanelCurrencyUI.RefreshDisplay();
+        }
     }
 
-    [ContextMenu("Test Close Gacha UI")]
-    public void TestCloseGachaUI()
+    // 🎬 NEW: Context menu for testing cutscene
+    [ContextMenu("Test Single Summon with Cutscene")]
+    public void TestSingleSummonWithCutscene()
     {
-        CloseGachaUI();
+        if (Application.isPlaying)
+        {
+            OnSingleSummonClicked();
+        }
+        else
+        {
+            Debug.Log("⚠️ This test only works in Play mode");
+        }
     }
 }

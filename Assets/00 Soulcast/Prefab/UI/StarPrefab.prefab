@@ -66,7 +66,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: b2b689476f0b86d46904bdc35a0f24de, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -88,8 +88,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f789810b778a5d47a6315c5ed87aa74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  filledStarSprite: {fileID: 21300000, guid: 1a5b22d6904adc04cae62ae74f0dec35, type: 3}
-  emptyStarSprite: {fileID: 21300000, guid: f919155727d1cbf4e929a5d0390b8898, type: 3}
+  filledStarSprite: {fileID: 21300000, guid: b2b689476f0b86d46904bdc35a0f24de, type: 3}
   filledStarColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  emptyStarColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   imageComponent: {fileID: 1360194756666238541}

@@ -15,8 +15,12 @@ MonoBehaviour:
   monsterName: Water Monster
   description: 
   element: 1
-  defaultStarLevel: 5
+  defaultStarLevel: 2
   modelPrefab: {fileID: 5639962352322865635, guid: f78ea25bdfa075b44acebf27996c05ae, type: 3}
+  defaultLevel: 1
+  maxLevel: 60
+  baseExperienceRequired: 100
+  experienceGrowthRate: 1.5
   baseHP: 999
   baseATK: 20
   baseDEF: 12

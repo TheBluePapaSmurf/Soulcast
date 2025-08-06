@@ -15,8 +15,12 @@ MonoBehaviour:
   monsterName: Fire Monster
   description: 
   element: 0
-  defaultStarLevel: 3
+  defaultStarLevel: 2
   modelPrefab: {fileID: 7905532589429311313, guid: 9943f7951a63a4643afb2d8045b0891c, type: 3}
+  defaultLevel: 1
+  maxLevel: 60
+  baseExperienceRequired: 100
+  experienceGrowthRate: 1.5
   baseHP: 100
   baseATK: 20
   baseDEF: 15
