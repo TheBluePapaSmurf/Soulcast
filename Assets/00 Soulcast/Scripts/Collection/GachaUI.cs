@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
@@ -41,13 +41,35 @@ public class GachaUI : MonoBehaviour
     [Tooltip("Button to close the Gacha UI and return camera")]
     public Button closeButton;
 
+    [Header("Manager Connection")]
+    [SerializeField] private bool autoFindManagers = true;
+    [SerializeField] private float managerSearchTimeout = 10f;
+    [SerializeField] private bool showDebugLogs = false;
+
+    // 🆕 UPDATED: Use the new manager system
     private GachaManager gachaManager;
-    private PlayerInventory playerInventory;
+    private CurrencyManager currencyManager; // Use CurrencyManager instead of PlayerInventory for currency
+    private PlayerInventory playerInventory;  // Still needed for adding monsters
+    private MonsterCollectionManager monsterCollectionManager;
+
     private int selectedPoolIndex = 0;
     private bool isGachaUIOpen = false;
+    private bool managersInitialized = false;
 
     void Start()
     {
+        StartCoroutine(InitializeGachaUI());
+    }
+
+    // 🆕 NEW: Robust initialization system
+    private IEnumerator InitializeGachaUI()
+    {
+        if (showDebugLogs) Debug.Log("🎮 GachaUI: Starting initialization...");
+
+        // Wait for managers to be available
+        yield return StartCoroutine(WaitForManagers());
+
+        // Initialize UI components
         InitializeReferences();
         SetupButtons();
         SetupDropdown();
@@ -58,21 +80,92 @@ public class GachaUI : MonoBehaviour
         {
             mainGachaPanel.SetActive(false);
         }
+
+        managersInitialized = true;
+        if (showDebugLogs) Debug.Log("✅ GachaUI: Initialization complete!");
     }
 
-    void InitializeReferences()
+    // 🆕 NEW: Wait for persistent managers to be loaded
+    private IEnumerator WaitForManagers()
     {
-        gachaManager = GachaManager.Instance;
-        playerInventory = PlayerInventory.Instance;
+        float timeout = managerSearchTimeout;
+        float elapsedTime = 0f;
 
+        while (elapsedTime < timeout)
+        {
+            // Check if all required managers are available
+            bool managersReady = true;
+
+            if (autoFindManagers)
+            {
+                // Find scene-specific manager (GachaManager)
+                if (gachaManager == null)
+                {
+                    gachaManager = FindAnyObjectByType<GachaManager>();
+                    if (gachaManager == null) managersReady = false;
+                }
+
+                // Find persistent managers
+                if (currencyManager == null)
+                {
+                    currencyManager = CurrencyManager.Instance;
+                    if (currencyManager == null) managersReady = false;
+                }
+
+                if (playerInventory == null)
+                {
+                    playerInventory = PlayerInventory.Instance;
+                    if (playerInventory == null) managersReady = false;
+                }
+
+                if (monsterCollectionManager == null)
+                {
+                    monsterCollectionManager = MonsterCollectionManager.Instance;
+                    if (monsterCollectionManager == null) managersReady = false;
+                }
+            }
+
+            if (managersReady)
+            {
+                if (showDebugLogs) Debug.Log("✅ GachaUI: All managers found!");
+                break;
+            }
+
+            yield return new WaitForSeconds(0.1f);
+            elapsedTime += 0.1f;
+        }
+
+        // Final check and error reporting
         if (gachaManager == null)
         {
-            Debug.LogError("GachaManager not found! Make sure it exists in the scene.");
+            Debug.LogError("❌ GachaUI: GachaManager not found! Make sure it exists in this scene.");
+        }
+
+        if (currencyManager == null)
+        {
+            Debug.LogError("❌ GachaUI: CurrencyManager not found! Make sure the init scene loaded properly.");
         }
 
         if (playerInventory == null)
         {
-            Debug.LogError("PlayerInventory not found! Make sure it exists in the scene.");
+            Debug.LogError("❌ GachaUI: PlayerInventory not found! Make sure the init scene loaded properly.");
+        }
+
+        if (monsterCollectionManager == null)
+        {
+            Debug.LogError("❌ GachaUI: MonsterCollectionManager not found! Make sure the init scene loaded properly.");
+        }
+    }
+
+    void InitializeReferences()
+    {
+        // Managers should already be found by WaitForManagers
+        if (showDebugLogs)
+        {
+            Debug.Log($"🔧 GachaUI References - GachaManager: {gachaManager != null}, " +
+                     $"CurrencyManager: {currencyManager != null}, " +
+                     $"PlayerInventory: {playerInventory != null}, " +
+                     $"MonsterCollection: {monsterCollectionManager != null}");
         }
     }
 
@@ -99,7 +192,7 @@ public class GachaUI : MonoBehaviour
             closeButton.onClick.AddListener(CloseGachaUI);
         }
 
-        // Set cost text
+        // Set cost text using GachaManager
         if (singleSummonCostText != null && gachaManager != null)
         {
             singleSummonCostText.text = $"Cost: {gachaManager.singleSummonCost}";
@@ -123,21 +216,26 @@ public class GachaUI : MonoBehaviour
 
     void Update()
     {
-        UpdateUI();
+        if (managersInitialized)
+        {
+            UpdateUI();
+        }
     }
 
+    // 🆕 UPDATED: Use CurrencyManager for currency display
     void UpdateUI()
     {
-        if (playerInventory != null && currencyText != null)
+        // Update currency display - use Crystals instead of Soul Coins for gacha
+        if (currencyManager != null && currencyText != null)
         {
-            currencyText.text = $"Crystals: {playerInventory.GetSoulCoins()}";
+            currencyText.text = $"Crystals: {currencyManager.GetCrystals():N0}";
         }
 
-        if (gachaManager != null)
+        if (gachaManager != null && currencyManager != null)
         {
-            // Update button interactability based on currency
-            bool canAffordSingle = gachaManager.CanAffordSummon(gachaManager.singleSummonCost);
-            bool canAffordMulti = gachaManager.CanAffordSummon(gachaManager.multiSummonCost);
+            // Update button interactability based on crystal currency
+            bool canAffordSingle = currencyManager.CanAffordCrystals(gachaManager.singleSummonCost);
+            bool canAffordMulti = currencyManager.CanAffordCrystals(gachaManager.multiSummonCost);
 
             if (singleSummonButton != null)
             {
@@ -151,12 +249,12 @@ public class GachaUI : MonoBehaviour
         }
     }
 
-    // NEW: Method to open the Gacha UI with camera transition
+    // Method to open the Gacha UI with camera transition
     public void OpenGachaUI()
     {
         if (isGachaUIOpen) return;
 
-        Debug.Log("Opening Gacha UI...");
+        if (showDebugLogs) Debug.Log("🎮 Opening Gacha UI...");
 
         if (useCameraTransition && CameraController.Instance != null)
         {
@@ -172,12 +270,12 @@ public class GachaUI : MonoBehaviour
         }
     }
 
-    // NEW: Method to close the Gacha UI with camera return
+    // Method to close the Gacha UI with camera return
     public void CloseGachaUI()
     {
         if (!isGachaUIOpen) return;
 
-        Debug.Log("Closing Gacha UI...");
+        if (showDebugLogs) Debug.Log("🎮 Closing Gacha UI...");
 
         // Hide UI first
         HideGachaPanel();
@@ -195,7 +293,7 @@ public class GachaUI : MonoBehaviour
         {
             mainGachaPanel.SetActive(true);
             isGachaUIOpen = true;
-            Debug.Log("Gacha UI Panel opened");
+            if (showDebugLogs) Debug.Log("✅ Gacha UI Panel opened");
         }
     }
 
@@ -205,7 +303,7 @@ public class GachaUI : MonoBehaviour
         {
             mainGachaPanel.SetActive(false);
             isGachaUIOpen = false;
-            Debug.Log("Gacha UI Panel closed");
+            if (showDebugLogs) Debug.Log("✅ Gacha UI Panel closed");
         }
 
         // Also hide result panel if open
@@ -217,14 +315,14 @@ public class GachaUI : MonoBehaviour
 
     public void OnSingleSummonClicked()
     {
-        if (gachaManager == null) return;
+        if (gachaManager == null || !managersInitialized) return;
 
         StartCoroutine(PerformSummonWithAnimation(false));
     }
 
     public void OnMultiSummonClicked()
     {
-        if (gachaManager == null) return;
+        if (gachaManager == null || !managersInitialized) return;
 
         StartCoroutine(PerformSummonWithAnimation(true));
     }
@@ -244,7 +342,7 @@ public class GachaUI : MonoBehaviour
             }
         }
 
-        // Show summoning animation (you can customize this)
+        // Show summoning animation
         if (titleText != null)
         {
             titleText.text = isMulti ? "Summoning 10 Monsters..." : "Summoning Monster...";
@@ -282,8 +380,7 @@ public class GachaUI : MonoBehaviour
     {
         if (summonResultUI != null)
         {
-            // DON'T hide or disable mainPanel - keep it visible
-            // Just show the result panel on top
+            // Keep mainPanel visible, show result panel on top
             resultPanel.SetActive(true);
 
             // Display results
@@ -291,11 +388,10 @@ public class GachaUI : MonoBehaviour
         }
         else
         {
-            Debug.LogError("SummonResultUI not assigned!");
+            Debug.LogError("❌ SummonResultUI not assigned!");
         }
     }
 
-    // Add this new coroutine method to GachaUI.cs
     IEnumerator DisplayResultsAfterFrame(GachaSummonResult result)
     {
         // Wait one frame to ensure the ResultPanel is fully active
@@ -307,7 +403,7 @@ public class GachaUI : MonoBehaviour
 
     void ShowErrorMessage(string message)
     {
-        Debug.LogError($"Summon Error: {message}");
+        Debug.LogError($"❌ Summon Error: {message}");
         // You can add a popup or notification UI here
     }
 
@@ -332,14 +428,17 @@ public class GachaUI : MonoBehaviour
         }
         else
         {
-            Debug.LogError("InventoryMainPanel reference not assigned in GachaUI!");
+            Debug.LogError("❌ InventoryMainPanel reference not assigned in GachaUI!");
         }
     }
 
     void OnPoolSelectionChanged(int poolIndex)
     {
         selectedPoolIndex = poolIndex;
-        Debug.Log($"Selected pool: {gachaManager.GetPoolNames()[poolIndex]}");
+        if (showDebugLogs && gachaManager != null)
+        {
+            Debug.Log($"🎯 Selected pool: {gachaManager.GetPoolNames()[poolIndex]}");
+        }
     }
 
     void SetButtonsInteractable(bool interactable)
@@ -351,7 +450,19 @@ public class GachaUI : MonoBehaviour
 
     public void ReturnToMainPanel()
     {
-        resultPanel.SetActive(false);
+        if (resultPanel != null)
+        {
+            resultPanel.SetActive(false);
+        }
+    }
+
+    // 🆕 NEW: Public method to refresh connections (useful for debugging)
+    [ContextMenu("Refresh Manager Connections")]
+    public void RefreshManagerConnections()
+    {
+        managersInitialized = false;
+        StopAllCoroutines();
+        StartCoroutine(InitializeGachaUI());
     }
 
     // Context menu for testing
