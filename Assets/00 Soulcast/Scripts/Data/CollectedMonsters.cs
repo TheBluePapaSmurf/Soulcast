@@ -369,17 +369,54 @@ public class CollectedMonster
     /// <summary>
     /// Load MonsterData from Resources
     /// </summary>
+    /// <summary>
+    /// Load MonsterData from multiple possible locations
+    /// </summary>
     private void LoadMonsterData()
     {
-        if (monsterData == null && !string.IsNullOrEmpty(monsterDataName))
+        if (monsterData != null || string.IsNullOrEmpty(monsterDataName))
+            return;
+
+        Debug.Log($"🔍 Loading MonsterData: {monsterDataName}");
+
+        // Strategy 1: Try standard Resources/Monsters/ folder
+        monsterData = Resources.Load<MonsterData>($"Monsters/{monsterDataName}");
+        if (monsterData != null)
         {
-            monsterData = Resources.Load<MonsterData>($"Monsters/{monsterDataName}");
-            if (monsterData == null)
-            {
-                Debug.LogWarning($"Could not load MonsterData: {monsterDataName}");
-            }
+            Debug.Log($"✅ Loaded from Resources/Monsters/: {monsterDataName}");
+            return;
         }
+
+        // Strategy 2: Try Resources root folder
+        monsterData = Resources.Load<MonsterData>(monsterDataName);
+        if (monsterData != null)
+        {
+            Debug.Log($"✅ Loaded from Resources/: {monsterDataName}");
+            return;
+        }
+
+        // Strategy 3: Try alternative folder structure
+        monsterData = Resources.Load<MonsterData>($"MonsterData/{monsterDataName}");
+        if (monsterData != null)
+        {
+            Debug.Log($"✅ Loaded from Resources/MonsterData/: {monsterDataName}");
+            return;
+        }
+
+        // Strategy 4: Search in all loaded assets (non-Resources)
+        var allMonsterData = Resources.FindObjectsOfTypeAll<MonsterData>();
+        monsterData = allMonsterData.FirstOrDefault(m => m.name == monsterDataName);
+
+        if (monsterData != null)
+        {
+            Debug.Log($"✅ Found in loaded assets: {monsterDataName}");
+            return;
+        }
+
+        Debug.LogError($"❌ Could not load MonsterData: {monsterDataName}");
+        Debug.LogError($"💡 Make sure '{monsterDataName}.asset' is in Resources/Monsters/ folder");
     }
+
 
     /// <summary>
     /// Restore equipped runes from names
