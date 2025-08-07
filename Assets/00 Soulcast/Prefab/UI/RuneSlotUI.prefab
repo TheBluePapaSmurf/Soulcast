@@ -90,22 +90,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dab597b8965b9eb4388cccd3f7d37346, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  slotBackground: {fileID: 5123606513698451266}
-  runeIcon: {fileID: 5476169620031239280}
-  slotTypeIcon: {fileID: 0}
+  runeSlotIcon: {fileID: 0}
+  runeSlotBackground: {fileID: 0}
+  runeSlotName: {fileID: 0}
   runeLevel: {fileID: 6659383232977119727}
-  unequipButton: {fileID: 0}
-  requiredRuneType: 5
+  button: {fileID: 0}
   slotIndex: 5
+  requiredSlotPosition: 0
+  emptySlotSprite: {fileID: 0}
+  filledSlotSprite: {fileID: 0}
   emptySlotColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  occupiedSlotColor: {r: 1, g: 1, b: 1, a: 1}
-  runeTypeSprites:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  filledSlotColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &3674551013669321743
 GameObject:
   m_ObjectHideFlags: 0

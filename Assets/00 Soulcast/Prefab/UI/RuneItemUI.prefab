@@ -30,12 +30,12 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 6618472707229095851}
+  m_Father: {fileID: 6598483395806895122}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -8.6}
-  m_SizeDelta: {x: 35.0764, y: 38.2182}
+  m_AnchoredPosition: {x: 0, y: -5.3}
+  m_SizeDelta: {x: 22.8189, y: 31.8266}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5158548646055209481
 CanvasRenderer:
@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 450af2f92a889a544971faf65c24df1d, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -75,7 +75,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!1 &4376426262138924277
+--- !u!1 &6794493805813033513
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -83,23 +83,23 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 6618472707229095851}
-  - component: {fileID: 3702220424694821825}
-  - component: {fileID: 8764427843366059872}
+  - component: {fileID: 6598483395806895122}
+  - component: {fileID: 2774613143731606447}
+  - component: {fileID: 7687694807875792506}
   m_Layer: 5
-  m_Name: RuneEmpty
+  m_Name: RuneImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!224 &6618472707229095851
+--- !u!224 &6598483395806895122
 RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4376426262138924277}
+  m_GameObject: {fileID: 6794493805813033513}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -111,23 +111,23 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 60, y: 80}
+  m_SizeDelta: {x: 71.29, y: 76.982}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &3702220424694821825
+--- !u!222 &2774613143731606447
 CanvasRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4376426262138924277}
+  m_GameObject: {fileID: 6794493805813033513}
   m_CullTransparentMesh: 1
---- !u!114 &8764427843366059872
+--- !u!114 &7687694807875792506
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4376426262138924277}
+  m_GameObject: {fileID: 6794493805813033513}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
@@ -141,7 +141,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 6f79b5d74f3dc56418288fc2be9a3439, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 629bf54736e5cf343b81d413aa085af2, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -183,7 +183,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 6618472707229095851}
+  - {fileID: 6598483395806895122}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -219,7 +219,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 2cbf769c8d771964480e875be4e50362, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 3701af96e0ed8b4419e0c43f08d54969, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -228,7 +228,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1.5
+  m_PixelsPerUnitMultiplier: 17
 --- !u!114 &4900229797516310948
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -286,6 +286,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   runeIcon: {fileID: 4597293425981041499}
+  runeImage: {fileID: 7687694807875792506}
   rarityBorder: {fileID: 0}
   runeTypeIcon: {fileID: 0}
   runeNameText: {fileID: 0}
@@ -295,6 +296,49 @@ MonoBehaviour:
   equippedOverlay: {fileID: 0}
   equippedText: {fileID: 0}
   equippedIcon: {fileID: 0}
+  runeImagesBySlot:
+  - slotName: 
+    raritySprites:
+    - {fileID: 21300000, guid: 42bc81d3477a9524bbb3d2e6d5a557ce, type: 3}
+    - {fileID: 21300000, guid: da63b6b91afd27642905b1973e3701a4, type: 3}
+    - {fileID: 21300000, guid: f9835b67d43e80e4faf36a227b8a7162, type: 3}
+    - {fileID: 21300000, guid: f15ace3e1aba933458f46da1091eb1a2, type: 3}
+    - {fileID: 21300000, guid: 629bf54736e5cf343b81d413aa085af2, type: 3}
+  - slotName: 
+    raritySprites:
+    - {fileID: 21300000, guid: a26efb17dd3c57a42a923150fec1118b, type: 3}
+    - {fileID: 21300000, guid: 5901828b034ff694fb03072b887651ea, type: 3}
+    - {fileID: 21300000, guid: 2ccef37c4caa798409abfa086108c426, type: 3}
+    - {fileID: 21300000, guid: b2115db0870107243aed958824ce7121, type: 3}
+    - {fileID: 21300000, guid: 06f535d79c9d25e4cb47fdcf106d4d54, type: 3}
+  - slotName: 
+    raritySprites:
+    - {fileID: 21300000, guid: ac3d4e4daeef0ba41b59891b414806e0, type: 3}
+    - {fileID: 21300000, guid: fae02721f7df89248955d80f279bdf24, type: 3}
+    - {fileID: 21300000, guid: d0a643a04bd808c4095425661a9e4d5b, type: 3}
+    - {fileID: 21300000, guid: b7925ed82be006e45ade67fd13b57895, type: 3}
+    - {fileID: 21300000, guid: 3d4d208d310c7b84db7f2f22e596090b, type: 3}
+  - slotName: 
+    raritySprites:
+    - {fileID: 21300000, guid: 4bdde179ae0c0284f8405e7d3686ee85, type: 3}
+    - {fileID: 21300000, guid: 6e7f208fc17e5174d902859a35154c07, type: 3}
+    - {fileID: 21300000, guid: 2224e39e5e74bc84da4fb1a091f47e3a, type: 3}
+    - {fileID: 21300000, guid: 857777a38a0abe54883c9901d32962a8, type: 3}
+    - {fileID: 21300000, guid: 3d4e6d3e9fbeb654fbcec91bed9fbca5, type: 3}
+  - slotName: 
+    raritySprites:
+    - {fileID: 21300000, guid: 2c8e9e31a1c6c0444aa076af5d717b95, type: 3}
+    - {fileID: 21300000, guid: 72ed15ab70ce01f4aa0df43d268cb636, type: 3}
+    - {fileID: 21300000, guid: a69b45c8ef62cef46992b46536231bb8, type: 3}
+    - {fileID: 21300000, guid: 1e56f23094d60a04eb1c0dc8317375fa, type: 3}
+    - {fileID: 21300000, guid: feb88203ec4d69a47bbdcdeab8f45d1d, type: 3}
+  - slotName: 
+    raritySprites:
+    - {fileID: 21300000, guid: 61609852a7aec754597156db58e63849, type: 3}
+    - {fileID: 21300000, guid: 5fd16a4ca7210b0418179e203f7b8cb7, type: 3}
+    - {fileID: 21300000, guid: eadedaa494a827a4bab2b15ba5294e25, type: 3}
+    - {fileID: 21300000, guid: 5d1e43c642182c743b09d64990769526, type: 3}
+    - {fileID: 21300000, guid: 85c7cf5a6ed3a334c9944b02ab5d88e5, type: 3}
   rarityColors:
   - {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 0}
   - {r: 0.2807715, g: 1, b: 0, a: 0}
@@ -304,3 +348,5 @@ MonoBehaviour:
   runeTypeSprites: []
   equippedOverlayColor: {r: 0, g: 0, b: 0, a: 0.7}
   unequippedColor: {r: 1, g: 1, b: 1, a: 1}
+  useRarityBasedImages: 1
+  showDebugLogs: 0

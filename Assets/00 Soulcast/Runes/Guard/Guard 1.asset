@@ -17,7 +17,7 @@ MonoBehaviour:
   runeIcon: {fileID: 21300000, guid: 450af2f92a889a544971faf65c24df1d, type: 3}
   runeType: 4
   runeSlotPosition: 5
-  rarity: 0
+  rarity: 2
   mainStat:
     statType: 2
     value: 265

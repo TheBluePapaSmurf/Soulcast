@@ -407,23 +407,64 @@ public class MonsterInventoryUI : MonoBehaviour
         if (showDebugLogs) Debug.Log("✅ Monster cards cleared");
     }
 
+    // 🔧 ENHANCED: Better monster selection with comprehensive debugging
     public void SelectMonster(CollectedMonster monster)
     {
-        if (showDebugLogs) Debug.Log($"🎯 Selecting monster: {monster.monsterData.monsterName}");
-        currentSelectedMonster = monster;
+        if (showDebugLogs) Debug.Log($"🎯 SelectMonster called with: {(monster != null ? monster.monsterData.monsterName : "NULL")}");
 
+        if (monster == null)
+        {
+            Debug.LogError("❌ Cannot select null monster!");
+            return;
+        }
+
+        if (monster.monsterData == null)
+        {
+            Debug.LogError($"❌ Cannot select monster with null MonsterData! UniqueID: {monster.uniqueID}");
+            return;
+        }
+
+        currentSelectedMonster = monster;
+        if (showDebugLogs) Debug.Log($"✅ currentSelectedMonster set to: {monster.monsterData.monsterName} (ID: {monster.uniqueID})");
+
+        // Update 3D display
         if (monsterDisplay3D != null)
         {
             monsterDisplay3D.DisplayMonster(monster.monsterData);
+            if (showDebugLogs) Debug.Log($"✅ 3D display updated for: {monster.monsterData.monsterName}");
+        }
+        else
+        {
+            if (showDebugLogs) Debug.LogWarning("⚠️ monsterDisplay3D is null!");
         }
 
+        // 🔧 ENHANCED: Better RunePanelUI updating with validation
         if (runePanelUI != null)
         {
+            if (showDebugLogs) Debug.Log($"🔧 Setting current monster on RunePanelUI: {monster.monsterData.monsterName}");
             runePanelUI.SetCurrentMonster(monster);
+
+            // 🆕 NEW: Verify the monster was set correctly
+            CollectedMonster verifyMonster = runePanelUI.GetCurrentMonster();
+            if (verifyMonster == monster)
+            {
+                if (showDebugLogs) Debug.Log($"✅ RunePanelUI current monster verified: {verifyMonster.monsterData.monsterName}");
+            }
+            else
+            {
+                Debug.LogError($"❌ RunePanelUI current monster verification FAILED! Expected: {monster.monsterData.monsterName}, Got: {(verifyMonster != null ? verifyMonster.monsterData.monsterName : "NULL")}");
+            }
+        }
+        else
+        {
+            Debug.LogError("❌ runePanelUI is null! Cannot set current monster for rune operations.");
         }
 
         UpdateStatsDisplay(monster);
         UpdateCardSelection(monster);
+
+        // 🆕 NEW: Log final selection state
+        if (showDebugLogs) Debug.Log($"🎯 Monster selection complete. Current monster: {currentSelectedMonster.monsterData.monsterName}");
     }
 
     void UpdateStatsDisplay(CollectedMonster monster)
@@ -536,9 +577,24 @@ public class MonsterInventoryUI : MonoBehaviour
         }
     }
 
+    // 🔧 ENHANCED: Better OnMonsterCardClicked with debugging
     public void OnMonsterCardClicked(CollectedMonster monster)
     {
+        if (showDebugLogs) Debug.Log($"🖱️ Monster card clicked: {(monster != null ? monster.monsterData.monsterName : "NULL")}");
+
+        if (monster == null)
+        {
+            Debug.LogError("❌ OnMonsterCardClicked called with null monster!");
+            return;
+        }
+
         SelectMonster(monster);
+    }
+
+    // 🆕 NEW: Get current selected monster (for debugging)
+    public CollectedMonster GetCurrentSelectedMonster()
+    {
+        return currentSelectedMonster;
     }
 
     void OnDisable()
@@ -549,7 +605,7 @@ public class MonsterInventoryUI : MonoBehaviour
         }
     }
 
-    // Context menus for testing
+    // 🆕 NEW: Enhanced context menus for testing
     [ContextMenu("Test Open Monster Inventory")]
     public void TestOpenMonsterInventory()
     {
@@ -578,5 +634,54 @@ public class MonsterInventoryUI : MonoBehaviour
     public void DebugManagerReferences()
     {
         FindManagerReferences();
+    }
+
+    [ContextMenu("Debug Current Selection State")]
+    public void DebugCurrentSelectionState()
+    {
+        Debug.Log("=== Monster Selection Debug ===");
+        Debug.Log($"currentSelectedMonster: {(currentSelectedMonster != null ? currentSelectedMonster.monsterData.monsterName : "NULL")}");
+        Debug.Log($"runePanelUI: {(runePanelUI != null ? "Found" : "NULL")}");
+
+        if (runePanelUI != null)
+        {
+            CollectedMonster runePanelMonster = runePanelUI.GetCurrentMonster();
+            Debug.Log($"runePanelUI.GetCurrentMonster(): {(runePanelMonster != null ? runePanelMonster.monsterData.monsterName : "NULL")}");
+            Debug.Log($"Monsters match: {(currentSelectedMonster == runePanelMonster)}");
+        }
+
+        Debug.Log($"currentSelectedCard: {(currentSelectedCard != null ? "Found" : "NULL")}");
+        Debug.Log($"monsterCards.Count: {monsterCards.Count}");
+        Debug.Log("=== End Debug ===");
+    }
+
+    [ContextMenu("Force Select First Monster")]
+    public void ForceSelectFirstMonster()
+    {
+        if (monsterCards.Count > 0)
+        {
+            var firstMonster = monsterCards[0].GetMonster();
+            if (firstMonster != null)
+            {
+                Debug.Log($"🔧 Force selecting first monster: {firstMonster.monsterData.monsterName}");
+                SelectMonster(firstMonster);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ No monster cards available to select!");
+        }
+    }
+
+    [ContextMenu("Test Monster Card Click Simulation")]
+    public void TestMonsterCardClickSimulation()
+    {
+        if (monsterCards.Count > 0)
+        {
+            var firstCard = monsterCards[0];
+            var monster = firstCard.GetMonster();
+            Debug.Log($"🧪 Simulating card click for: {monster.monsterData.monsterName}");
+            OnMonsterCardClicked(monster);
+        }
     }
 }

@@ -92,7 +92,7 @@ Material:
     - _UnderlayDilate: 0.41
     - _UnderlayOffsetX: 0.09
     - _UnderlayOffsetY: -0.06
-    - _UnderlaySoftness: 0.36
+    - _UnderlaySoftness: 0.458
     - _VertexOffsetX: 0
     - _VertexOffsetY: 0
     - _WeightBold: 0.75
