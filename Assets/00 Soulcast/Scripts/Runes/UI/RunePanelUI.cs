@@ -27,6 +27,11 @@ public class RunePanelUI : MonoBehaviour
     public GameObject runeItemPrefab;
     public TextMeshProUGUI runeCountText;
 
+    [Header("🆕 Set Effects")]
+    public Transform setEffectContent;  // The SetPanel with VerticalLayoutGroup
+    public GameObject setEffectItemPrefab;  // SetEffectItem prefab
+    public GameObject noSetEffectsPanel;  // Optional "No set effects" panel
+
     [Header("Other References")]
     public RuneSlotButton[] runeSlots = new RuneSlotButton[6]; // 🔧 CHANGED: RuneSlotUI → RuneSlotButton
     public TextMeshProUGUI setBonusText;
@@ -40,6 +45,7 @@ public class RunePanelUI : MonoBehaviour
     private CollectedMonster currentMonster;
     private List<RuneItemUI> runeItems = new List<RuneItemUI>();
     private List<RuneTypeFilterButton> typeFilterButtons = new List<RuneTypeFilterButton>();
+    private List<SetEffectItem> setEffectItems = new List<SetEffectItem>();
     private RuneType selectedRuneType = (RuneType)(-1);
     private RuneSetData selectedRuneSet = null;
     private bool isInitialized = false; // 🆕 NEW: Track initialization state
@@ -545,6 +551,7 @@ public class RunePanelUI : MonoBehaviour
         }
 
         RefreshRuneSlots();
+        RefreshSetEffects();
     }
 
     // 🔧 UPDATED: Use RuneSlotButton instead of RuneSlotUI
@@ -709,12 +716,182 @@ public class RunePanelUI : MonoBehaviour
 
         if (monster != null)
         {
-            // Ensure slots are populated and active
             PopulateRuneSlotsArray();
             EnsureRuneSlotsAreActive();
-
             InitializeRuneSlotButtons();
             RefreshRuneSlots();
+
+            // 🆕 NEW: Refresh set effects when monster changes
+            RefreshSetEffects();
+        }
+        else
+        {
+            // Clear set effects when no monster
+            ClearSetEffects();
+        }
+    }
+
+    public void RefreshSetEffects()
+    {
+        if (showDebugLogs) Debug.Log("🔄 Refreshing set effects (active only)...");
+
+        ClearSetEffects();
+
+        if (currentMonster == null)
+        {
+            ShowNoSetEffects();
+            return;
+        }
+
+        var activeSetEffects = CalculateActiveSetEffects(); // 🔧 CHANGED: Only get active effects
+        if (activeSetEffects.Count == 0)
+        {
+            ShowNoSetEffects();
+            return;
+        }
+
+        SpawnSetEffectItems(activeSetEffects);
+        HideNoSetEffects();
+    }
+
+    private List<SetEffectData> CalculateActiveSetEffects()
+    {
+        var activeSetEffects = new List<SetEffectData>();
+        var setCounts = new Dictionary<RuneSetData, int>();
+
+        if (showDebugLogs) Debug.Log($"🔍 Calculating ACTIVE set effects for {currentMonster.monsterData.monsterName}...");
+
+        // Count equipped runes by set
+        foreach (var slot in currentMonster.runeSlots)
+        {
+            if (slot.equippedRune?.runeSet != null)
+            {
+                var runeSet = slot.equippedRune.runeSet;
+
+                if (!setCounts.ContainsKey(runeSet))
+                {
+                    setCounts[runeSet] = 0;
+                }
+
+                setCounts[runeSet]++;
+
+                if (showDebugLogs)
+                {
+                    Debug.Log($"   📦 Found {runeSet.setName} rune, count now: {setCounts[runeSet]}");
+                }
+            }
+        }
+
+        // 🔧 ENHANCED: Only add ACTIVE set bonuses (where equipped >= required)
+        foreach (var kvp in setCounts)
+        {
+            var setData = kvp.Key;
+            var equippedCount = kvp.Value;
+
+            if (setData.setBonuses != null)
+            {
+                foreach (var bonus in setData.setBonuses)
+                {
+                    // 🎯 KEY CHANGE: Only include if the set is actually active
+                    if (equippedCount >= bonus.requiredPieces)
+                    {
+                        activeSetEffects.Add(new SetEffectData
+                        {
+                            setData = setData,
+                            equippedPieces = equippedCount,
+                            requiredPieces = bonus.requiredPieces,
+                            isActive = true // Always true since we only add active ones
+                        });
+
+                        if (showDebugLogs)
+                        {
+                            Debug.Log($"     ✅ ACTIVE: {setData.setName} {bonus.requiredPieces}-piece bonus ({equippedCount}/{bonus.requiredPieces})");
+                        }
+                    }
+                    else
+                    {
+                        if (showDebugLogs)
+                        {
+                            Debug.Log($"     ❌ INACTIVE: {setData.setName} {bonus.requiredPieces}-piece bonus ({equippedCount}/{bonus.requiredPieces}) - SKIPPED");
+                        }
+                    }
+                }
+            }
+        }
+
+        if (showDebugLogs) Debug.Log($"🎯 Found {activeSetEffects.Count} ACTIVE set effects total");
+
+        return activeSetEffects;
+    }
+
+    private void SpawnSetEffectItems(List<SetEffectData> setEffectDataList)
+    {
+        if (setEffectContent == null || setEffectItemPrefab == null)
+        {
+            Debug.LogError("❌ SetEffectContent or SetEffectItemPrefab not assigned!");
+            return;
+        }
+
+        if (showDebugLogs) Debug.Log($"🎨 Spawning {setEffectDataList.Count} ACTIVE set effect items...");
+
+        foreach (var data in setEffectDataList)
+        {
+            GameObject itemObj = Instantiate(setEffectItemPrefab, setEffectContent);
+            SetEffectItem item = itemObj.GetComponent<SetEffectItem>();
+
+            if (item != null)
+            {
+                // 🔧 SIMPLIFIED: No isActive parameter needed since all are active
+                item.Setup(data.setData, data.requiredPieces);
+                setEffectItems.Add(item);
+
+                if (showDebugLogs)
+                {
+                    Debug.Log($"   ✅ Spawned: {data.setData.setName} {data.requiredPieces}-piece bonus");
+                }
+            }
+            else
+            {
+                Debug.LogError("❌ SetEffectItem component not found on prefab!");
+                Destroy(itemObj);
+            }
+        }
+
+        if (showDebugLogs) Debug.Log($"✅ Spawned {setEffectItems.Count} active set effect items total");
+    }
+
+    // 🆕 NEW: Clear all set effect items
+    private void ClearSetEffects()
+    {
+        if (showDebugLogs) Debug.Log($"🧹 Clearing {setEffectItems.Count} set effect items...");
+
+        foreach (var item in setEffectItems)
+        {
+            if (item != null && item.gameObject != null)
+            {
+                Destroy(item.gameObject);
+            }
+        }
+        setEffectItems.Clear();
+    }
+
+    // 🆕 NEW: Show "no set effects" panel
+    private void ShowNoSetEffects()
+    {
+        if (noSetEffectsPanel != null)
+        {
+            noSetEffectsPanel.SetActive(true);
+            if (showDebugLogs) Debug.Log("📄 Showing 'No Set Effects' panel");
+        }
+    }
+
+    // 🆕 NEW: Hide "no set effects" panel
+    private void HideNoSetEffects()
+    {
+        if (noSetEffectsPanel != null)
+        {
+            noSetEffectsPanel.SetActive(false);
+            if (showDebugLogs) Debug.Log("🔽 Hiding 'No Set Effects' panel");
         }
     }
 
@@ -801,6 +978,50 @@ public class RunePanelUI : MonoBehaviour
     {
         EnsureRuneSlotsAreActive();
         PopulateRuneSlotsArray();
+    }
+
+    [System.Serializable]
+    private class SetEffectData
+    {
+        public RuneSetData setData;
+        public int equippedPieces;
+        public int requiredPieces;
+        public bool isActive;
+    }
+
+    // 🆕 NEW: Context menus for testing
+    [ContextMenu("Test Refresh Set Effects")]
+    public void TestRefreshSetEffects()
+    {
+        RefreshSetEffects();
+    }
+
+    [ContextMenu("Debug Current Monster Set Effects")]
+    public void DebugCurrentMonsterSetEffects()
+    {
+        if (currentMonster == null)
+        {
+            Debug.Log("❌ No current monster set!");
+            return;
+        }
+
+        Debug.Log($"=== Set Effects Debug for {currentMonster.monsterData.monsterName} ===");
+
+        for (int i = 0; i < currentMonster.runeSlots.Length; i++)
+        {
+            var slot = currentMonster.runeSlots[i];
+            if (slot.equippedRune != null)
+            {
+                string setName = slot.equippedRune.runeSet != null ? slot.equippedRune.runeSet.setName : "NONE";
+                Debug.Log($"   Slot {i}: {slot.equippedRune.runeName} (Set: {setName})");
+            }
+            else
+            {
+                Debug.Log($"   Slot {i}: EMPTY");
+            }
+        }
+
+        Debug.Log("=== End Debug ===");
     }
 
     [ContextMenu("Debug Panel States")]

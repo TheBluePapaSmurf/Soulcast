@@ -15,7 +15,7 @@ MonoBehaviour:
   monsterName: Fairy Queen
   description: 
   element: 3
-  defaultStarLevel: 4
+  defaultStarLevel: 3
   modelPrefab: {fileID: 5093301849020271738, guid: 63202963dc6333d478f87a6e98e34a2c, type: 3}
   defaultLevel: 1
   maxLevel: 60

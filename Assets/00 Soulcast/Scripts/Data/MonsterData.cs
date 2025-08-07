@@ -1,4 +1,4 @@
-// MonsterData.cs - ENHANCED WITH RUNE SYSTEM SUPPORT
+﻿// MonsterData.cs - ENHANCED WITH RUNE SYSTEM SUPPORT
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -95,9 +95,9 @@ public class MonsterStats
         speed = 0;
         energy = 0;
         criticalRate = 0f;
-        criticalDamage = 150f;
-        accuracy = 85f;
-        resistance = 15f;
+        criticalDamage = 0f;
+        accuracy = 0f;
+        resistance = 0f;
     }
 
     public MonsterStats(MonsterData monsterData, int level = 1, int starLevel = 1)
@@ -115,6 +115,7 @@ public class MonsterStats
         // Combat stats don't scale with level/star (affected by runes instead)
         criticalRate = monsterData.baseCriticalRate;
         criticalDamage = monsterData.baseCriticalDamage;
+
         accuracy = monsterData.baseAccuracy;
         resistance = monsterData.baseResistance;
     }

@@ -27,6 +27,11 @@ public class MonsterInventoryUI : MonoBehaviour
     public TextMeshProUGUI healthStatText;
     public TextMeshProUGUI attackStatText;
     public TextMeshProUGUI defenseStatText;
+    public TextMeshProUGUI speedStatText;
+    public TextMeshProUGUI critRateText;
+    public TextMeshProUGUI critDamageText;
+    public TextMeshProUGUI accuracyStatText;
+    public TextMeshProUGUI resistanceStatText;
     public TextMeshProUGUI duplicateInfoText;
     public StarDisplay statsStarDisplay;
 
@@ -476,6 +481,11 @@ public class MonsterInventoryUI : MonoBehaviour
             monsterNameText.text = monster.monsterData.monsterName;
         }
 
+        Debug.Log($"📋 Level: {monster.level}, Star: {monster.currentStarLevel}");
+
+        // Force create a NEW MonsterStats to trigger the constructor debug
+        MonsterStats baseStats = new MonsterStats(monster.monsterData, monster.level, monster.currentStarLevel);
+
         if (levelText != null)
         {
             levelText.text = $"Level {monster.level}";
@@ -491,36 +501,66 @@ public class MonsterInventoryUI : MonoBehaviour
             statsStarDisplay.SetStarLevel(monster.currentStarLevel);
         }
 
+
+
         // Calculate stats
-        MonsterStats baseStats = new MonsterStats(monster.monsterData, monster.level, monster.currentStarLevel);
         MonsterStats totalStats = monster.GetEffectiveStats();
 
         // Calculate bonuses
         int healthBonus = totalStats.health - baseStats.health;
         int attackBonus = totalStats.attack - baseStats.attack;
         int defenseBonus = totalStats.defense - baseStats.defense;
+        int speedBonus = totalStats.speed - baseStats.speed;
 
         // Update stat displays
         if (healthStatText != null)
         {
             healthStatText.text = healthBonus > 0 ?
-                $"Health: {baseStats.health} <color=#00FF00>+{healthBonus}</color>" :
-                $"Health: {baseStats.health}";
+                $"HP: {baseStats.health} <color=#00FF00>+{healthBonus}</color>" :
+                $"HP: {baseStats.health}";
         }
 
         if (attackStatText != null)
         {
             attackStatText.text = attackBonus > 0 ?
-                $"Attack: {baseStats.attack} <color=#00FF00>+{attackBonus}</color>" :
-                $"Attack: {baseStats.attack}";
+                $"ATK: {baseStats.attack} <color=#00FF00>+{attackBonus}</color>" :
+                $"ATK: {baseStats.attack}";
         }
 
         if (defenseStatText != null)
         {
             defenseStatText.text = defenseBonus > 0 ?
-                $"Defense: {baseStats.defense} <color=#00FF00>+{defenseBonus}</color>" :
-                $"Defense: {baseStats.defense}";
+                $"DEF: {baseStats.defense} <color=#00FF00>+{defenseBonus}</color>" :
+                $"DEF: {baseStats.defense}";
         }
+
+        if (speedStatText != null)
+        {
+            speedStatText.text = speedBonus > 0 ?
+                $"SPD: {baseStats.speed} <color=#00FF00>+{defenseBonus}</color>" :
+                $"SPD: {baseStats.speed}";
+        }
+
+        if (critRateText != null)
+        {
+            critRateText.text = $"CRIT RATE: {totalStats.criticalRate}%";
+        }
+
+        if (critDamageText != null)
+        {
+            critDamageText.text = $"Resistance: {totalStats.criticalDamage}%";
+        }
+
+        if (resistanceStatText != null)
+        {
+            resistanceStatText.text = $"Resistance: {totalStats.resistance}%";
+        }
+
+        if (accuracyStatText != null)
+        {
+            accuracyStatText.text = $"Accuracy: {totalStats.accuracy}%";
+        }
+
 
         if (duplicateInfoText != null && monsterCollectionManager != null)
         {
@@ -653,24 +693,6 @@ public class MonsterInventoryUI : MonoBehaviour
         Debug.Log($"currentSelectedCard: {(currentSelectedCard != null ? "Found" : "NULL")}");
         Debug.Log($"monsterCards.Count: {monsterCards.Count}");
         Debug.Log("=== End Debug ===");
-    }
-
-    [ContextMenu("Force Select First Monster")]
-    public void ForceSelectFirstMonster()
-    {
-        if (monsterCards.Count > 0)
-        {
-            var firstMonster = monsterCards[0].GetMonster();
-            if (firstMonster != null)
-            {
-                Debug.Log($"🔧 Force selecting first monster: {firstMonster.monsterData.monsterName}");
-                SelectMonster(firstMonster);
-            }
-        }
-        else
-        {
-            Debug.LogWarning("⚠️ No monster cards available to select!");
-        }
     }
 
     [ContextMenu("Test Monster Card Click Simulation")]

@@ -17,6 +17,10 @@ MonoBehaviour:
   element: 2
   defaultStarLevel: 4
   modelPrefab: {fileID: 1547161762616007879, guid: 86ee848ec7300044b990cf17667318c9, type: 3}
+  defaultLevel: 1
+  maxLevel: 60
+  baseExperienceRequired: 100
+  experienceGrowthRate: 1.5
   baseHP: 4600
   baseATK: 215
   baseDEF: 180

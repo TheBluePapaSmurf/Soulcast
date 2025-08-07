@@ -19,7 +19,7 @@ MonoBehaviour:
   setIcon: {fileID: 21300000, guid: 450af2f92a889a544971faf65c24df1d, type: 3}
   setColor: {r: 1, g: 1, b: 1, a: 1}
   setBonuses:
-  - requiredPieces: 0
+  - requiredPieces: 2
     description: Guard 2 Set
     bonusStats:
     - statType: 2
