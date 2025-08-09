@@ -8,7 +8,7 @@ public class SummonResultUI : MonoBehaviour
 {
     [Header("Result Display")]
     public Transform monsterDisplayParent;
-    public GameObject inventoryMonsterCardPrefab; // CHANGED: Use InventoryMonsterCard prefab
+    public GameObject universalMonsterCardPrefab; // CHANGED: Use InventoryMonsterCard prefab
     public TextMeshProUGUI resultHeaderText;
     public Button continueButton;
 
@@ -28,7 +28,7 @@ public class SummonResultUI : MonoBehaviour
     public bool hideSelectionBorder = true; // Hide selection border in gacha results
     public bool hideDuplicateInfo = true; // Hide duplicate info in gacha results
 
-    private List<InventoryMonsterCard> currentCards = new List<InventoryMonsterCard>(); // CHANGED: Use InventoryMonsterCard
+    private List<UniversalMonsterCard> currentCards = new List<UniversalMonsterCard>(); // CHANGED: Use InventoryMonsterCard
     private GachaUI gachaUI;
 
     [System.Obsolete]
@@ -72,8 +72,8 @@ public class SummonResultUI : MonoBehaviour
             var gachaMonster = result.summonedMonsters[i];
 
             // Create card
-            GameObject cardObj = Instantiate(inventoryMonsterCardPrefab, monsterDisplayParent);
-            InventoryMonsterCard card = cardObj.GetComponent<InventoryMonsterCard>();
+            GameObject cardObj = Instantiate(universalMonsterCardPrefab, monsterDisplayParent);
+            UniversalMonsterCard card = cardObj.GetComponent<UniversalMonsterCard>();
 
             if (card != null)
             {
@@ -120,7 +120,7 @@ public class SummonResultUI : MonoBehaviour
         return displayMonster;
     }
 
-    void ApplyGachaResultStyling(InventoryMonsterCard card, MonsterRarity rarity)
+    void ApplyGachaResultStyling(UniversalMonsterCard card, MonsterRarity rarity)
     {
         // Use selection border color instead of background
         if (card.selectionBorder != null)

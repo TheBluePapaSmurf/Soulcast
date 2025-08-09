@@ -41,7 +41,7 @@ public class MonsterInventoryUI : MonoBehaviour
 
     [Header("Monster List")]
     public Transform monsterListContent;
-    public GameObject inventoryMonsterCardPrefab;
+    public GameObject universalMonsterCardPrefab;
     public ScrollRect monsterScrollView;
 
     [Header("Selection")]
@@ -66,9 +66,9 @@ public class MonsterInventoryUI : MonoBehaviour
     private PlayerInventory playerInventory;
 
     // UI State
-    private List<InventoryMonsterCard> monsterCards = new List<InventoryMonsterCard>();
+    private List<UniversalMonsterCard> monsterCards = new List<UniversalMonsterCard>();
     private CollectedMonster currentSelectedMonster;
-    private InventoryMonsterCard currentSelectedCard;
+    private UniversalMonsterCard currentSelectedCard;
     private Button monsterCollectionButton;
 
     void Awake()
@@ -182,7 +182,7 @@ public class MonsterInventoryUI : MonoBehaviour
             Debug.LogError("❌ MonsterListContent not assigned!");
         }
 
-        if (inventoryMonsterCardPrefab == null)
+        if (universalMonsterCardPrefab == null)
         {
             Debug.LogError("❌ InventoryMonsterCardPrefab not assigned!");
         }
@@ -340,7 +340,7 @@ public class MonsterInventoryUI : MonoBehaviour
             return;
         }
 
-        if (inventoryMonsterCardPrefab == null)
+        if (universalMonsterCardPrefab == null)
         {
             Debug.LogError("❌ InventoryMonsterCardPrefab is null! Cannot create cards.");
             return;
@@ -353,10 +353,10 @@ public class MonsterInventoryUI : MonoBehaviour
 
             try
             {
-                GameObject cardObj = Instantiate(inventoryMonsterCardPrefab, monsterListContent);
+                GameObject cardObj = Instantiate(universalMonsterCardPrefab, monsterListContent);
                 if (showDebugLogs) Debug.Log($"✅ Card GameObject created for {monster.monsterData.monsterName}");
 
-                InventoryMonsterCard card = cardObj.GetComponent<InventoryMonsterCard>();
+                UniversalMonsterCard card = cardObj.GetComponent<UniversalMonsterCard>();
                 if (card != null)
                 {
                     card.Setup(monster, this);

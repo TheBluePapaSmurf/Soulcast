@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 
@@ -8,6 +8,13 @@ public class WorldMapManager : MonoBehaviour
     [SerializeField] private GameObject regionMapContainer;
     [SerializeField] private GameObject levelMapContainer;
     [SerializeField] private GameObject fogOfWarOverlay;
+
+    [Header("Battle Sequence Menu")]
+    [SerializeField] private BattleSequenceMenu battleSequenceMenu;
+
+    // ✅ NEW: Battle System Integration
+    [Header("Battle System")]
+    [SerializeField] private PreBattleTeamSelection preBattleTeamSelection;
 
     [Header("UI Elements")]
     [SerializeField] private Button backButton;
@@ -46,12 +53,127 @@ public class WorldMapManager : MonoBehaviour
             regionButtons[i].OnRegionSelected += () => SelectRegion(regionIndex);
         }
 
-        // Setup level buttons
+        // Setup level buttons - Updated part
         for (int i = 0; i < levelButtons.Length; i++)
         {
             int levelIndex = i; // Lokale kopie voor closure
-            levelButtons[i].SetLevelData(levelIndex + 1);
-            levelButtons[i].OnLevelSelected += () => SelectLevel(levelIndex);
+
+            // Initialize level with region data and battle menu reference
+            levelButtons[i].InitializeLevel(1, levelIndex + 1, battleSequenceMenu); // Start met regio 1
+
+            // Keep the old event for backward compatibility (optional)
+            levelButtons[i].OnLevelSelected += () => Debug.Log($"Level {levelIndex + 1} selected (fallback)");
+        }
+
+        // Setup battle sequence menu
+        if (battleSequenceMenu != null)
+        {
+            battleSequenceMenu.OnMenuClosed += OnBattleSequenceMenuClosed;
+        }
+
+        // ✅ NEW: Setup pre-battle team selection
+        SetupPreBattleTeamSelection();
+    }
+
+    // ✅ NEW: Setup method for PreBattleTeamSelection
+    private void SetupPreBattleTeamSelection()
+    {
+        if (preBattleTeamSelection != null)
+        {
+            // Setup callbacks for when battle starts or is cancelled
+            preBattleTeamSelection.OnBattleStart += HandleBattleStart;
+            preBattleTeamSelection.OnSelectionCancelled += HandleBattleSelectionCancelled;
+
+            Debug.Log("PreBattleTeamSelection initialized successfully");
+        }
+        else
+        {
+            Debug.LogWarning("PreBattleTeamSelection is not assigned in WorldMapManager!");
+        }
+    }
+
+    // ✅ NEW: Handle when battle actually starts
+    private void HandleBattleStart(CombatTemplate config, System.Collections.Generic.List<CollectedMonster> team)
+    {
+        Debug.Log($"WorldMapManager: Starting battle '{config.combatName}' with {team.Count} monsters");
+
+        // Here you can add additional logic before transitioning to battle scene
+        // For example: save current world map state, play transition effects, etc.
+
+        // Save current world map context
+        SaveCurrentWorldMapState();
+
+        // Optional: Show loading screen or transition effect
+        StartBattleTransition(config, team);
+    }
+
+    // ✅ NEW: Handle when team selection is cancelled
+    private void HandleBattleSelectionCancelled()
+    {
+        Debug.Log("WorldMapManager: Battle team selection was cancelled");
+
+        // Optional: Re-enable world map interactions or play sound effect
+        // The battle sequence menu should handle its own state
+    }
+
+    // ✅ NEW: Save current world map state before battle
+    private void SaveCurrentWorldMapState()
+    {
+        // Save which region and level was selected for return after battle
+        if (currentSelectedRegion >= 0)
+        {
+            PlayerPrefs.SetInt("LastSelectedRegion", currentSelectedRegion + 1);
+            PlayerPrefs.SetString("LastWorldMapState", "LevelView");
+        }
+        else
+        {
+            PlayerPrefs.SetString("LastWorldMapState", "RegionView");
+        }
+
+        Debug.Log($"Saved world map state: Region {currentSelectedRegion + 1}");
+    }
+
+    // ✅ NEW: Handle battle transition
+    private void StartBattleTransition(CombatTemplate config, System.Collections.Generic.List<CollectedMonster> team)
+    {
+        // You can add transition effects here before loading the battle scene
+        // For now, we'll use the existing SceneTransitionManager
+
+        int regionId = currentSelectedRegion + 1;
+        int levelId = 1; // You might want to track this more specifically
+
+        SceneTransitionManager.Instance?.LoadBattleLevel(regionId, levelId);
+    }
+
+    // ✅ NEW: Method to restore world map state after returning from battle
+    public void RestoreWorldMapState()
+    {
+        string lastState = PlayerPrefs.GetString("LastWorldMapState", "RegionView");
+        int lastRegion = PlayerPrefs.GetInt("LastSelectedRegion", 1);
+
+        if (lastState == "LevelView" && lastRegion > 0)
+        {
+            // Restore to the level view of the last selected region
+            currentSelectedRegion = lastRegion - 1;
+
+            // Update level buttons with the correct region data
+            for (int i = 0; i < levelButtons.Length; i++)
+            {
+                levelButtons[i].SetRegionData(lastRegion);
+            }
+
+            // Show level view directly
+            regionMapContainer.SetActive(false);
+            levelMapContainer.SetActive(true);
+            levelMapContainer.transform.localScale = Vector3.one;
+
+            Debug.Log($"Restored world map to Level View for Region {lastRegion}");
+        }
+        else
+        {
+            // Default to region view
+            ShowRegionView();
+            Debug.Log("Restored world map to Region View");
         }
     }
 
@@ -66,15 +188,14 @@ public class WorldMapManager : MonoBehaviour
         if (isTransitioning) return;
 
         currentSelectedRegion = regionIndex;
+
+        // Update alle level buttons met de nieuwe regio data
+        for (int i = 0; i < levelButtons.Length; i++)
+        {
+            levelButtons[i].SetRegionData(regionIndex + 1);
+        }
+
         StartCoroutine(TransitionToLevelView(regionIndex + 1));
-    }
-
-    private void SelectLevel(int levelIndex)
-    {
-        if (isTransitioning) return;
-
-        // Laad battle level
-        SceneTransitionManager.Instance?.LoadBattleLevel(currentSelectedRegion + 1, levelIndex + 1);
     }
 
     private System.Collections.IEnumerator TransitionToLevelView(int regionNumber)
@@ -194,6 +315,33 @@ public class WorldMapManager : MonoBehaviour
 
         Debug.Log("Returning to Hub");
         SceneTransitionManager.Instance?.LoadHubScene();
+    }
+
+    private void OnBattleSequenceMenuClosed()
+    {
+        // Optional: doe iets wanneer het battle menu wordt gesloten
+        Debug.Log("Battle sequence menu closed");
+    }
+
+    // ✅ NEW: Context menu for testing battle integration
+    [ContextMenu("Test Battle Integration")]
+    private void TestBattleIntegration()
+    {
+        if (Application.isPlaying && preBattleTeamSelection != null)
+        {
+            Debug.Log("Testing battle integration...");
+
+            // Check if MonsterCollectionManager has monsters
+            if (MonsterCollectionManager.Instance != null)
+            {
+                var monsters = MonsterCollectionManager.Instance.GetAllMonsters();
+                Debug.Log($"Available monsters: {monsters.Count}");
+            }
+            else
+            {
+                Debug.LogWarning("MonsterCollectionManager.Instance is null!");
+            }
+        }
     }
 
     // Debug methods

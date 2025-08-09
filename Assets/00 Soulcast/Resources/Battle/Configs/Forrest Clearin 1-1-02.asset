@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2fbfc7089e06df418af900f6de0bcb4, type: 3}
+  m_Name: Forrest Clearin 1-1-02
+  m_EditorClassIdentifier: 
+  battleName: Forrest Clearin 1-2
+  battleDescription: 
+  battleIcon: {fileID: 0}
+  requiredPlayerLevel: 1
+  recommendedTeamSize: 1
+  recommendedRoles: 
+  rewards:
+    soulCoins: 0
+    experience: 0
+    guaranteedItems: []
+    randomItems: []
+    unlockableMonsters: []
+  waves:
+  - waveName: FairyQueen
+    waveDelay: 0
+    enemySpawns:
+    - monsterData: {fileID: 11400000, guid: 4a4a14c2cd2b1814cb75f8765b7780d3, type: 2}
+      monsterLevel: 40
+      starLevel: 4
+      spawnCount: 0
+      spawnDelay: 0
+      spawnPosition: {x: 0, y: 0, z: 0}
+      spawnPattern: 0
+      useCustomBehavior: 0
+      aggressivenessOverride: 0
+      intelligenceOverride: 0
+    completionType: 0
+    maxWaveTime: 0
+  timeLimit: 0
+  difficulty: 1
+  modifiers: 
+  starRequirements:
+    oneStarDescription: Complete the battle
+    twoStarCondition: 0
+    twoStarTimeLimit: 180
+    twoStarMaxLosses: 1
+    twoStarDescription: Complete under 3 minutes
+    threeStarCondition: 1
+    threeStarTimeLimit: 120
+    threeStarMaxLosses: 0
+    threeStarDescription: Complete without losing any monsters

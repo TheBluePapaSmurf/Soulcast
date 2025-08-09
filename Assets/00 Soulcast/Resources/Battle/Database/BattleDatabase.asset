@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 169fe48aa0bc3594daae5924d92e8922, type: 3}
+  m_Name: BattleDatabase
+  m_EditorClassIdentifier: 
+  allCombats: []
+  regions:
+  - regionId: 1
+    regionName: Hoofdstuk 1
+    levels:
+    - levelId: 1
+      levelName: 
+      combats:
+      - {fileID: 11400000, guid: b9585abfdc78df74fae5b3530628013c, type: 2}
+      - {fileID: 11400000, guid: e47f0cdfc8207fd4487181781aeca930, type: 2}
+    - levelId: 2
+      levelName: 
+      combats:
+      - {fileID: 11400000, guid: e47f0cdfc8207fd4487181781aeca930, type: 2}
