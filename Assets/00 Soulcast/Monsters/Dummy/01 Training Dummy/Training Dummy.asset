@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 655278882a6de7b41a92473b7afc0325, type: 3}
+  m_Name: Training Dummy
+  m_EditorClassIdentifier: 
+  monsterName: Training Dummy
+  description: 
+  element: 3
+  role: 1
+  roleDescription: High Attack and Critical Rate. Primary damage dealer.
+  defaultStarLevel: 2
+  modelPrefab: {fileID: 3209882271953158892, guid: e25b19a25499db84ba785198e43a277e, type: 3}
+  defaultLevel: 1
+  maxLevel: 60
+  baseExperienceRequired: 100
+  experienceGrowthRate: 1.5
+  baseHP: 2500
+  baseATK: 400
+  baseDEF: 75
+  baseSPD: 99
+  baseEnergy: 50
+  baseCriticalRate: 5
+  baseCriticalDamage: 150
+  baseAccuracy: 85
+  baseResistance: 15
+  normalAttack: {fileID: 11400000, guid: c9c0b87b3f431f04884dc0d825f1a8f7, type: 2}
+  specialAttack: {fileID: 11400000, guid: a4c30acaaf187b94faefc75875e91586, type: 2}
+  ultimate: {fileID: 11400000, guid: 5883c050f634e884c88aa2382220857e, type: 2}
+  icon: {fileID: 21300000, guid: e1ede0ca1c36db045962f9d12507a9d4, type: 3}
+  monsterColor: {r: 1, g: 1, b: 1, a: 1}
+  aggressiveness: 0.5
+  intelligence: 0.5
+  preferredPosition: 3
+  synergyRoles: 

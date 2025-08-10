@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96414f3068a1ac74e8c0e8d1aca714b1, type: 3}
+  m_Name: Head But
+  m_EditorClassIdentifier: 
+  actionName: Fire Projectile
+  description: Fires a magic projectile to a single target. With a burn duration
+    of 3 turns.
+  category: 2
+  type: 0
+  targetType: 0
+  requiresTarget: 1
+  attackRange: 0
+  energyCost: 0
+  cooldownTurns: 3
+  basePower: 150
+  usesAttackStat: 0
+  ignoresDefense: 1
+  hitCount: 1
+  timeBetweenHits: 0.3
+  divideDamagePerHit: 1
+  statusEffects: []
+  statModifiers: []
+  effectPrefab: {fileID: 0}
+  soundEffect: {fileID: 0}
+  icon: {fileID: 21300000, guid: a67d90cca8ca79c4daa3759f25e2c8a2, type: 3}
+  healsUser: 0
+  healAmount: 0
+  criticalChance: 0.1
+  criticalMultiplier: 1.5

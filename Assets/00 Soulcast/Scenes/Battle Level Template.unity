@@ -668,9 +668,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2049717292}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 234.5105, y: -50}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &166205564
@@ -944,9 +944,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb52a9277627b4645bc86dee7afb82a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rewardDatabase: {fileID: 11400000, guid: cdf260ba0a8e8414da5fba8e12d9a05b, type: 2}
-  showRewardNotifications: 1
-  notificationDuration: 3
 --- !u!1 &311776975
 GameObject:
   m_ObjectHideFlags: 0
@@ -1227,7 +1224,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &364968060
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1320,9 +1317,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 775298470}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 234.5105, y: -50}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &389714460
@@ -1815,8 +1812,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: VICTORY
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3012fe79eabb6f24093b71f70e6e7e6a, type: 2}
-  m_sharedMaterial: {fileID: -4322812294730138402, guid: 3012fe79eabb6f24093b71f70e6e7e6a, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3485,9 +3482,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2049717292}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 61.5035, y: -50}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1117068203
@@ -4055,9 +4052,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 775298470}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 61.5035, y: -50}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1253782774
@@ -4493,8 +4490,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Reward
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 7df9a64c67028004097a1a25e6d80048, type: 2}
-  m_sharedMaterial: {fileID: 5225488882256663490, guid: 7df9a64c67028004097a1a25e6d80048, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -6467,9 +6464,12 @@ MonoBehaviour:
   playerMonsterData:
   - {fileID: 11400000, guid: 4a4a14c2cd2b1814cb75f8765b7780d3, type: 2}
   - {fileID: 11400000, guid: 8fa8abe40dc6d0848b952b9537789044, type: 2}
+  - {fileID: 11400000, guid: c3e2c8e1cc778c342b31838148b4b4d2, type: 2}
   enemyMonsterData:
-  - {fileID: 11400000, guid: 1f880f2eb79ce8d4ba98e2bdc8f88654, type: 2}
-  - {fileID: 11400000, guid: 4517279d8d654804595c6667206f3304, type: 2}
+  - {fileID: 11400000, guid: 4ae8e1f901647354eb6b4495acc10fd7, type: 2}
+  - {fileID: 11400000, guid: c3e2c8e1cc778c342b31838148b4b4d2, type: 2}
+  - {fileID: 11400000, guid: d1ef2c1f406bfde45a0ac6aa4fd6551a, type: 2}
+  - {fileID: 11400000, guid: d1ef2c1f406bfde45a0ac6aa4fd6551a, type: 2}
   playerSpawnPoints:
   - {fileID: 1995274362}
   - {fileID: 1396721943}
@@ -6955,45 +6955,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 128072f730874fb41879cb7e6c4bea20, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  victoryPanel: {fileID: 364968059}
-  victoryTitle: {fileID: 495445180}
-  continueButton: {fileID: 0}
-  rewardsContainer: {fileID: 1312731881}
-  soulCoinsRewardPrefab: {fileID: 0}
-  experienceRewardPrefab: {fileID: 0}
-  runeRewardPrefab: {fileID: 0}
-  monsterRewardPrefab: {fileID: 0}
-  totalSoulCoinsText: {fileID: 389714461}
-  totalExperienceText: {fileID: 115044594}
-  rewardAnimationDelay: 0.3
-  rewardAnimationDuration: 0.5
-  rewardAnimationCurve:
-    m_Curve:
-    - time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  victorySound: {fileID: 0}
-  rewardSound: {fileID: 0}
-  coinSound: {fileID: 0}
-  totalSoulCoins: 0
-  totalExperience: 0
-  activeRewardItems: []
 --- !u!1 &1995274361
 GameObject:
   m_ObjectHideFlags: 0
@@ -7086,8 +7047,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Level name (Difficulty)
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3012fe79eabb6f24093b71f70e6e7e6a, type: 2}
-  m_sharedMaterial: {fileID: -4322812294730138402, guid: 3012fe79eabb6f24093b71f70e6e7e6a, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -7635,12 +7596,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e4b89f3b6ba3834d9fe84f1f91be957, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  soulCoins: 6000
-  collectedMonsters: []
-  ownedRunes: []
-  maxRuneCapacity: 200
-  maxCollectionSize: 100
-  saveFileName: PlayerSave.es3
+  currencyManager: {fileID: 0}
+  monsterCollectionManager: {fileID: 0}
+  runeCollectionManager: {fileID: 0}
 --- !u!224 &160679628257512701
 RectTransform:
   m_ObjectHideFlags: 0

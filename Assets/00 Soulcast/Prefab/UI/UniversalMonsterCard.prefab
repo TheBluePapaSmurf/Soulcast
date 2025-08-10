@@ -34,8 +34,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -2.1589966}
+  m_SizeDelta: {x: 0, y: -4.3179}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8792168051038400978
 CanvasRenderer:
@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 3701af96e0ed8b4419e0c43f08d54969, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 9b81a9568b1c58141aee2896de464e04, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -74,7 +74,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 12.9
+  m_PixelsPerUnitMultiplier: 4.2
 --- !u!1 &2042028418440936574
 GameObject:
   m_ObjectHideFlags: 0
@@ -141,7 +141,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: f8e7ec1464fd7204abfb7525cf0e914c, type: 3}
-  m_Type: 0
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -149,7 +149,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
+  m_PixelsPerUnitMultiplier: 4
 --- !u!1 &5360116582102270033
 GameObject:
   m_ObjectHideFlags: 0
@@ -298,10 +298,10 @@ RectTransform:
   m_Father: {fileID: 4888392276927287626}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 12.507}
-  m_SizeDelta: {x: -38.8612, y: 44.7829}
-  m_Pivot: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -7.62, y: -29.392998}
+  m_SizeDelta: {x: -15.24, y: -83.799}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4408068809981860080
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -357,7 +357,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 39.1
+  m_fontSize: 31.6
   m_fontSizeBase: 32
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -439,7 +439,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6886685682670334845, guid: 2bbc92963b8294e4a8c24df752b271f9, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: -18.76
       objectReference: {fileID: 0}
     - target: {fileID: 6886685682670334845, guid: 2bbc92963b8294e4a8c24df752b271f9, type: 3}
       propertyPath: m_SizeDelta.y
@@ -475,11 +475,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6886685682670334845, guid: 2bbc92963b8294e4a8c24df752b271f9, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: -0.0000076293945
       objectReference: {fileID: 0}
     - target: {fileID: 6886685682670334845, guid: 2bbc92963b8294e4a8c24df752b271f9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 87.493
+      value: 77.493
       objectReference: {fileID: 0}
     - target: {fileID: 6886685682670334845, guid: 2bbc92963b8294e4a8c24df752b271f9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
