@@ -629,15 +629,102 @@ public class CombatManager : MonoBehaviour
         }
     }
 
-    private IEnumerator HandleVictory()
+    private void HandleVictory()
     {
         Debug.Log("🎉 === BATTLE VICTORY === 🎉");
 
-        // Je bestaande victory logic hier...
-        yield return new WaitForSeconds(1.5f);
+        // Get battle data for rewards and progression
+        if (BattleDataManager.Instance != null && BattleDataManager.Instance.HasValidBattleData())
+        {
+            var battleData = BattleDataManager.Instance.GetCurrentBattleData();
 
-        // Je bestaande victory screen logic hier...
-        Debug.Log("Battle completed successfully! Rewards have been awarded.");
+            // Give rewards
+            GiveBattleRewards(battleData);
+
+            // ✅ NEW: Update progression using BattleProgressionManager
+            if (BattleProgressionManager.Instance != null)
+            {
+                BattleProgressionManager.Instance.CompleteBattle(
+                    battleData.regionId,
+                    battleData.levelId,
+                    battleData.battleSequenceId,
+                    3, // Stars earned (you can make this dynamic)
+                    Time.time // Completion time
+                );
+            }
+        }
+
+        // Show victory UI and then return to world map
+        StartCoroutine(ShowVictoryAndReturn());
+    }
+
+    private void GiveBattleRewards(BattleSetupData battleData)
+    {
+        var combatTemplate = battleData.combatTemplate;
+        if (combatTemplate?.rewards == null) return;
+
+        // Generate rewards using the new system
+        var rewardResult = combatTemplate.rewards.GenerateRewards(
+            battleData.regionId,
+            battleData.levelId,
+            battleData.battleSequenceId
+        );
+
+        Debug.Log($"💰 Soul Coins Earned: {rewardResult.soulCoinsEarned:N0}");
+        Debug.Log($"🎁 Runes Earned: {rewardResult.runesEarned.Count}");
+
+        foreach (var rune in rewardResult.runesEarned)
+        {
+            Debug.Log($"  - {rune.rarity} {rune.runeName}");
+        }
+
+        // Add rewards to player inventory
+        AddRewardsToPlayer(rewardResult);
+    }
+
+    // ✅ NEW: Add rewards to player systems
+    private void AddRewardsToPlayer(CombatResult rewardResult)
+    {
+        // Add soul coins
+        int currentCoins = PlayerPrefs.GetInt("PlayerSoulCoins", 0);
+        PlayerPrefs.SetInt("PlayerSoulCoins", currentCoins + rewardResult.soulCoinsEarned);
+
+        // Add runes to inventory
+        if (PlayerInventory.Instance != null)
+        {
+            foreach (var rune in rewardResult.runesEarned)
+            {
+                PlayerInventory.Instance.AddRune(rune);
+            }
+        }
+
+        PlayerPrefs.Save();
+    }
+
+    private void MarkBattleAsCompleted(BattleSetupData battleData)
+    {
+        string battleKey = $"Region_{battleData.regionId}_Level_{battleData.levelId}_Battle_{battleData.battleSequenceId}";
+        PlayerPrefs.SetInt($"{battleKey}_Completed", 1);
+        PlayerPrefs.SetInt($"{battleKey}_Stars", 3); // Default to 3 stars for now
+        PlayerPrefs.Save();
+
+        Debug.Log($"✅ Battle marked as completed: {battleKey}");
+    }
+
+    // ✅ NEW: Show victory UI and return to world map
+    private IEnumerator ShowVictoryAndReturn()
+    {
+        // Show victory UI for a few seconds
+        // You can customize this to show actual victory screen
+        Debug.Log("🏆 Showing victory screen...");
+
+        yield return new WaitForSeconds(3f);
+
+        // Return to world map
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.ReturnToWorldMapAfterBattle();
+        }
     }
 
     private CollectedMonster FindMatchingCollectedMonster(Monster battleMonster)

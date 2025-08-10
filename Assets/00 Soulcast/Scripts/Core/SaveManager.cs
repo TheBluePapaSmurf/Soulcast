@@ -58,6 +58,8 @@ public class SaveManager : MonoBehaviour
 
     // ========== SAVE SYSTEM ==========
 
+    // ✅ ADD to SaveManager.cs SaveGame method:
+
     public void SaveGame()
     {
         try
@@ -71,6 +73,9 @@ public class SaveManager : MonoBehaviour
             MonsterCollectionManager.Instance?.SaveMonsterCollection();
             RuneCollectionManager.Instance?.SaveRuneCollection();
 
+            // ✅ NEW: Save battle progression
+            BattleProgressionManager.Instance?.SaveProgression();
+
             // Save metadata
             SaveMetadata();
 
@@ -82,6 +87,8 @@ public class SaveManager : MonoBehaviour
             Debug.LogError($"❌ Failed to save game: {e.Message}");
         }
     }
+
+    // ✅ ADD to SaveManager.cs LoadGame method:
 
     public void LoadGame()
     {
@@ -111,6 +118,9 @@ public class SaveManager : MonoBehaviour
             CurrencyManager.Instance?.LoadCurrency();
             MonsterCollectionManager.Instance?.LoadMonsterCollection();
             RuneCollectionManager.Instance?.LoadRuneCollection();
+
+            // ✅ NEW: Load battle progression
+            BattleProgressionManager.Instance?.LoadProgression();
 
             LoadMetadata();
 

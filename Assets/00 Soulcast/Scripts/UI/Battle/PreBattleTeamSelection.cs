@@ -318,29 +318,72 @@ public class PreBattleTeamSelection : MonoBehaviour
         }
     }
 
+    // ✅ REPLACE the StartBattle method in PreBattleTeamSelection.cs
+
     private void StartBattle()
     {
         if (selectedTeam.Count == 0) return;
 
-        Debug.Log($"Starting battle with {selectedTeam.Count} monsters:");
+        Debug.Log($"🚀 Starting REAL battle with {selectedTeam.Count} monsters:");
         foreach (var monster in selectedTeam)
         {
             Debug.Log($"- {monster.monsterData.monsterName} (Lv.{monster.level}, {monster.currentStarLevel}★)");
         }
 
+        // Save selected team
         SaveSelectedTeam();
 
-        // ✅ NEW: Auto-win the battle for testing (as discussed earlier)
-        AutoWinBattle();
+        // Get current battle location info
+        int currentRegion = PlayerPrefs.GetInt("CurrentRegion", 1);
+        int currentLevel = PlayerPrefs.GetInt("CurrentLevel", 1);
+        int currentBattle = PlayerPrefs.GetInt("CurrentBattleSequence", 1);
 
-        // Original battle start (commented out for now)
-        // OnBattleStart?.Invoke(currentBattleConfig, selectedTeam);
+        // ✅ NEW: Start real battle instead of auto-win
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.LoadBattleWithTeam(
+                currentBattleConfig,
+                selectedTeam,
+                currentRegion,
+                currentLevel,
+                currentBattle
+            );
+        }
+        else
+        {
+            Debug.LogError("SceneTransitionManager.Instance is null! Cannot start battle.");
+        }
 
+        // Hide selection panel
         if (selectionPanel != null)
             selectionPanel.SetActive(false);
         else
             gameObject.SetActive(false);
     }
+
+    // ✅ NEW: Add method to test battle loading without auto-win
+    [ContextMenu("Test Real Battle")]
+    private void TestRealBattle()
+    {
+        if (Application.isPlaying && currentBattleConfig != null && selectedTeam.Count > 0)
+        {
+            Debug.Log("🧪 Starting test real battle...");
+
+            if (SceneTransitionManager.Instance != null)
+            {
+                SceneTransitionManager.Instance.LoadBattleWithTeam(
+                    currentBattleConfig,
+                    selectedTeam,
+                    1, 1, 1 // Test location
+                );
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Cannot test battle: Missing battle config, no team selected, or not playing!");
+        }
+    }
+
 
     private void AutoWinBattle()
     {

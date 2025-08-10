@@ -12,17 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 169fe48aa0bc3594daae5924d92e8922, type: 3}
   m_Name: BattleDatabase
   m_EditorClassIdentifier: 
-  allCombats: []
+  allCombats:
+  - {fileID: 11400000, guid: ef5ba76f87cf6274cb70f09be7165136, type: 2}
   regions:
   - regionId: 1
     regionName: Hoofdstuk 1
     levels:
     - levelId: 1
-      levelName: 
+      levelName: 1
       combats:
-      - {fileID: 11400000, guid: b9585abfdc78df74fae5b3530628013c, type: 2}
-      - {fileID: 11400000, guid: e47f0cdfc8207fd4487181781aeca930, type: 2}
-    - levelId: 2
-      levelName: 
-      combats:
-      - {fileID: 11400000, guid: e47f0cdfc8207fd4487181781aeca930, type: 2}
+      - {fileID: 11400000, guid: ef5ba76f87cf6274cb70f09be7165136, type: 2}

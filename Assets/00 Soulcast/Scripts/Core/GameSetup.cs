@@ -1,4 +1,6 @@
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 
 public class GameSetup : MonoBehaviour
 {
@@ -29,7 +31,216 @@ public class GameSetup : MonoBehaviour
 
     void SetupGame()
     {
-        Debug.Log("GameSetup: Starting game setup with 3D model spawning...");
+        Debug.Log("GameSetup: Starting battle setup...");
+
+        // ✅ Wait for BattleDataManager if needed
+        if (BattleDataManager.Instance == null)
+        {
+            Debug.LogWarning("BattleDataManager.Instance is null! Trying to find it...");
+            var manager = FindFirstObjectByType<BattleDataManager>();
+            if (manager == null)
+            {
+                Debug.LogError("BattleDataManager not found! Setting up fallback game...");
+                SetupFallbackGame();
+                return;
+            }
+        }
+
+        // Check if we have valid battle data
+        if (BattleDataManager.Instance.HasValidBattleData())
+        {
+            SetupFromBattleData();
+        }
+        else
+        {
+            // Try to load from PlayerPrefs as fallback
+            if (BattleDataManager.Instance)
+            {
+                Debug.Log("Loaded battle data from PlayerPrefs backup");
+                SetupFromBattleData();
+            }
+            else
+            {
+                Debug.LogWarning("No battle data found. Setting up fallback game...");
+                SetupFallbackGame();
+            }
+        }
+    }
+
+    private void SetupFromBattleData()
+    {
+        var battleData = BattleDataManager.Instance.GetCurrentBattleData();
+        var combatTemplate = battleData.combatTemplate;
+        var selectedTeam = BattleDataManager.Instance.GetSelectedTeam();
+
+        if (combatTemplate == null)
+        {
+            Debug.LogError("CombatTemplate is null! Cannot setup battle.");
+            SetupFallbackGame();
+            return;
+        }
+
+        if (selectedTeam.Count == 0)
+        {
+            Debug.LogError("No selected team found! Cannot setup battle.");
+            SetupFallbackGame();
+            return;
+        }
+
+        Debug.Log($"🎯 Setting up battle: {combatTemplate.combatName}");
+        Debug.Log($"👥 Player team: {selectedTeam.Count} monsters");
+        Debug.Log($"⚔️ Enemy waves: {combatTemplate.waves.Count}");
+
+        // Clear any existing monsters
+        ClearExistingMonsters();
+
+        // Setup player team from selected monsters
+        SetupPlayerTeamFromData(selectedTeam);
+
+        // Setup enemies from combat template
+        SetupEnemiesFromTemplate(combatTemplate);
+
+        Debug.Log("✅ Battle setup from BattleDataManager complete!");
+    }
+
+    // ✅ NEW: Setup fallback game using existing arrays
+    private void SetupFallbackGame()
+    {
+        Debug.Log("GameSetup: Setting up fallback game with predefined data...");
+
+        // Clear any existing monsters first
+        ClearExistingMonsters();
+
+        // Use the original playerMonsterData and enemyMonsterData arrays
+        SetupOriginalGame();
+    }
+
+    // ✅ NEW: Clear existing monsters from scene
+    private void ClearExistingMonsters()
+    {
+        Monster[] existingMonsters = FindObjectsByType<Monster>(FindObjectsSortMode.None); // ✅ UPDATED
+        foreach (var monster in existingMonsters)
+        {
+            if (Application.isPlaying)
+                Destroy(monster.gameObject);
+            else
+                DestroyImmediate(monster.gameObject);
+        }
+
+        Debug.Log($"Cleared {existingMonsters.Length} existing monsters");
+    }
+
+    // ✅ NEW: Setup player team from selected CollectedMonsters
+    private void SetupPlayerTeamFromData(List<CollectedMonster> selectedTeam)
+    {
+        Debug.Log($"Setting up player team with {selectedTeam.Count} monsters...");
+
+        for (int i = 0; i < Mathf.Min(selectedTeam.Count, playerSpawnPoints.Length); i++)
+        {
+            var collectedMonster = selectedTeam[i];
+            var spawnPoint = playerSpawnPoints[i];
+
+            // Create MonsterData from CollectedMonster
+            var monsterData = CreateRuntimeMonsterData(collectedMonster);
+
+            // Spawn the monster
+            SpawnMonster(monsterData, spawnPoint, true, $"(Player {i + 1})");
+
+            Debug.Log($"✅ Spawned player monster {i + 1}: {collectedMonster.monsterData.monsterName} (Lv.{collectedMonster.level})");
+        }
+    }
+
+    // ✅ NEW: Setup enemies from combat template
+    private void SetupEnemiesFromTemplate(CombatTemplate combatTemplate)
+    {
+        Debug.Log($"Setting up enemies from template: {combatTemplate.waves.Count} waves...");
+
+        int enemyIndex = 0;
+
+        foreach (var wave in combatTemplate.waves)
+        {
+            foreach (var enemySpawn in wave.enemySpawns)
+            {
+                if (enemyIndex >= enemySpawnPoints.Length)
+                {
+                    Debug.LogWarning("Not enough enemy spawn points for all enemies!");
+                    break;
+                }
+
+                // Create multiple copies if spawnCount > 1
+                for (int copy = 0; copy < enemySpawn.spawnCount; copy++)
+                {
+                    if (enemyIndex >= enemySpawnPoints.Length) break;
+
+                    var spawnPoint = enemySpawnPoints[enemyIndex];
+
+                    // Create MonsterData from EnemySpawn
+                    var monsterData = CreateRuntimeEnemyData(enemySpawn);
+
+                    // Spawn the enemy
+                    SpawnMonster(monsterData, spawnPoint, false, $"(Enemy {enemyIndex + 1})");
+
+                    Debug.Log($"✅ Spawned enemy {enemyIndex + 1}: {enemySpawn.monsterData.monsterName} (Lv.{enemySpawn.monsterLevel})");
+
+                    enemyIndex++;
+                }
+            }
+        }
+    }
+
+    // ✅ NEW: Create runtime MonsterData from CollectedMonster
+    private MonsterData CreateRuntimeMonsterData(CollectedMonster collectedMonster)
+    {
+        // Clone the original MonsterData
+        var runtimeData = Instantiate(collectedMonster.monsterData);
+
+        // Apply level scaling and star bonuses
+        var scaledStats = collectedMonster.GetEffectiveStats();
+
+        // Update base stats with scaled values
+        runtimeData.baseHP = scaledStats.health;
+        runtimeData.baseATK = scaledStats.attack;
+        runtimeData.baseDEF = scaledStats.defense;
+        runtimeData.baseSPD = scaledStats.speed;
+        runtimeData.baseEnergy = scaledStats.energy;
+
+        // Update name to show level and stars
+        runtimeData.monsterName = $"{collectedMonster.monsterData.monsterName} Lv.{collectedMonster.level}";
+
+        Debug.Log($"Created runtime data for {runtimeData.monsterName}: HP={runtimeData.baseHP}, ATK={runtimeData.baseATK}");
+
+        return runtimeData;
+    }
+
+    // ✅ NEW: Create runtime MonsterData from EnemySpawn
+    private MonsterData CreateRuntimeEnemyData(EnemySpawn enemySpawn)
+    {
+        // Clone the original MonsterData
+        var runtimeData = Instantiate(enemySpawn.monsterData);
+
+        // Apply level and star scaling using the Monster system
+        var effectiveStats = enemySpawn.GetEffectiveStats();
+
+        // Update base stats
+        runtimeData.baseHP = effectiveStats.health;
+        runtimeData.baseATK = effectiveStats.attack;
+        runtimeData.baseDEF = effectiveStats.defense;
+        runtimeData.baseSPD = effectiveStats.speed;
+        runtimeData.baseEnergy = effectiveStats.energy;
+
+        // Update name to show level and stars
+        string rarity = MonsterData.GetRarityName(enemySpawn.starLevel);
+        runtimeData.monsterName = $"{enemySpawn.monsterData.monsterName} Lv.{enemySpawn.monsterLevel} ({rarity})";
+
+        Debug.Log($"Created enemy runtime data: {runtimeData.monsterName}: HP={runtimeData.baseHP}, ATK={runtimeData.baseATK}");
+
+        return runtimeData;
+    }
+
+    // ✅ NEW: Original setup method (for backwards compatibility)
+    private void SetupOriginalGame()
+    {
+        Debug.Log("GameSetup: Starting original game setup...");
 
         // Spawn player monsters
         for (int i = 0; i < Mathf.Min(playerSpawnPoints.Length, playerMonsterData.Length); i++)
@@ -59,7 +270,7 @@ public class GameSetup : MonoBehaviour
             }
         }
 
-        Debug.Log("GameSetup: Game setup complete!");
+        Debug.Log("GameSetup: Original game setup complete!");
     }
 
     private void SpawnMonster(MonsterData monsterData, Transform spawnPoint, bool isPlayerControlled, string suffix)
@@ -150,6 +361,36 @@ public class GameSetup : MonoBehaviour
         }
 
         Debug.Log($"Created fallback visual for {monsterData.monsterName}");
+    }
+
+    // ✅ IMPROVED: Enhanced debug methods
+    [ContextMenu("Test Battle Data Setup")]
+    private void TestBattleDataSetup()
+    {
+        if (Application.isPlaying)
+        {
+            Debug.Log("=== TESTING BATTLE DATA SETUP ===");
+
+            if (BattleDataManager.Instance != null)
+            {
+                bool hasData = BattleDataManager.Instance.HasValidBattleData();
+                Debug.Log($"BattleDataManager found: {hasData}");
+
+                if (hasData)
+                {
+                    var battleData = BattleDataManager.Instance.GetCurrentBattleData();
+                    Debug.Log($"Battle Template: {battleData.combatTemplate?.combatName}");
+                    Debug.Log($"Selected Team Count: {battleData.selectedTeamIDs.Count}");
+
+                    var selectedTeam = BattleDataManager.Instance.GetSelectedTeam();
+                    Debug.Log($"Retrieved Team Count: {selectedTeam.Count}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("BattleDataManager.Instance is null!");
+            }
+        }
     }
 
     // Debug method to respawn all monsters
