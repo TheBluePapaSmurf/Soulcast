@@ -19,16 +19,30 @@ MonoBehaviour:
   recommendedTeamSize: 1
   recommendedRoles: 
   rewards:
-    soulCoins: 0
-    experience: 0
-    guaranteedItems: []
-    randomItems: []
-    unlockableMonsters:
-    - monster: {fileID: 0}
-      starLevel: 0
-      level: 0
-      unlockChance: 0
-  waves: []
+    baseSoulCoins: 1000
+    soulCoinMultiplier: 1
+    useRegionBasedCoins: 1
+    guaranteedRuneDrop: 1
+    maxRuneDrops: 1
+    useRegionBasedDropRates: 1
+    customGuaranteedRunes: []
+    customRandomRunes: []
+  waves:
+  - waveName: 
+    waveDelay: 0
+    enemySpawns:
+    - monsterData: {fileID: 0}
+      monsterLevel: 1
+      starLevel: 1
+      spawnCount: 0
+      spawnDelay: 0
+      spawnPosition: {x: 0, y: 0, z: 0}
+      spawnPattern: 0
+      useCustomBehavior: 0
+      aggressivenessOverride: 0
+      intelligenceOverride: 0
+    completionType: 0
+    maxWaveTime: 0
   timeLimit: 0
   difficulty: 1
   modifiers: 

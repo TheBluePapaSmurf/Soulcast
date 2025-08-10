@@ -23,11 +23,11 @@ MonoBehaviour:
   maxLevel: 60
   baseExperienceRequired: 100
   experienceGrowthRate: 1.5
-  baseHP: 10000
-  baseATK: 0
-  baseDEF: 150
-  baseSPD: 0
-  baseEnergy: 0
+  baseHP: 80
+  baseATK: 15
+  baseDEF: 10
+  baseSPD: 8
+  baseEnergy: 40
   baseCriticalRate: 5
   baseCriticalDamage: 150
   baseAccuracy: 85

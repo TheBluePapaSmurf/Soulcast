@@ -15,17 +15,19 @@ MonoBehaviour:
   monsterName: Fairy Queen
   description: 
   element: 3
+  role: 5
+  roleDescription: Well-rounded stats. Adaptable to many situations.
   defaultStarLevel: 3
   modelPrefab: {fileID: 5093301849020271738, guid: 63202963dc6333d478f87a6e98e34a2c, type: 3}
   defaultLevel: 1
   maxLevel: 60
   baseExperienceRequired: 100
   experienceGrowthRate: 1.5
-  baseHP: 3600
-  baseATK: 240
-  baseDEF: 175
-  baseSPD: 103
-  baseEnergy: 50
+  baseHP: 80
+  baseATK: 15
+  baseDEF: 10
+  baseSPD: 8
+  baseEnergy: 10
   baseCriticalRate: 15
   baseCriticalDamage: 155
   baseAccuracy: 0
@@ -37,3 +39,5 @@ MonoBehaviour:
   monsterColor: {r: 1, g: 1, b: 1, a: 1}
   aggressiveness: 0.5
   intelligence: 0.5
+  preferredPosition: 3
+  synergyRoles: 

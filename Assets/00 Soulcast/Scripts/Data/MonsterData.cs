@@ -29,12 +29,12 @@ public class MonsterData : ScriptableObject
     public int baseExperienceRequired = 100;
     public float experienceGrowthRate = 1.5f;
 
-    [Header("Base Stats")]
-    public int baseHP = 100;
-    public int baseATK = 20;
-    public int baseDEF = 15;
-    public int baseSPD = 10;
-    public int baseEnergy = 50;
+    [Header("REBALANCED Base Stats")]
+    public int baseHP = 80;     // Reduced from 100
+    public int baseATK = 15;    // Reduced from 20
+    public int baseDEF = 10;    // Reduced from 15
+    public int baseSPD = 8;     // Reduced from 10
+    public int baseEnergy = 40; // Reduced from 50
 
     [Header("Base Combat Stats")]
     [Range(0f, 100f)]
@@ -75,10 +75,22 @@ public class MonsterData : ScriptableObject
         return actions;
     }
 
-    // Get stat multiplier based on star level
+    public float GetLevelMultiplier(int level)
+    {
+        return 1f + (Mathf.Pow(level - 1, 1.3f) * 0.08f);
+    }
+
     public float GetStarLevelMultiplier(int starLevel)
     {
-        return 1f + (starLevel - 1) * 0.25f; // Each star adds 25% to stats
+        switch (starLevel)
+        {
+            case 1: return 1.0f;
+            case 2: return 1.4f;
+            case 3: return 1.9f;
+            case 4: return 2.6f;
+            case 5: return 3.5f;
+            default: return 1.0f;
+        }
     }
 
     // Get rarity name based on star level
@@ -164,9 +176,9 @@ public class MonsterData : ScriptableObject
 
             case MonsterRole.Balanced:
                 // No specific bonuses, well-rounded
-                adjustedStats.health = Mathf.RoundToInt(stats.health * 1.05f);
-                adjustedStats.attack = Mathf.RoundToInt(stats.attack * 1.05f);
-                adjustedStats.defense = Mathf.RoundToInt(stats.defense * 1.05f);
+                adjustedStats.health = Mathf.RoundToInt(stats.health * 1.01f);
+                adjustedStats.attack = Mathf.RoundToInt(stats.attack * 1.01f);
+                adjustedStats.defense = Mathf.RoundToInt(stats.defense * 1.01f);
                 break;
         }
 
@@ -259,22 +271,24 @@ public class MonsterStats
         resistance = 0f;
     }
 
+    // ✅ FIXED MonsterStats Constructor
     public MonsterStats(MonsterData monsterData, int level = 1, int starLevel = 1)
     {
-        float levelMultiplier = 1f + (level - 1) * 0.1f;
+        // Use the new exponential scaling methods
+        float levelMultiplier = monsterData.GetLevelMultiplier(level);
         float starMultiplier = monsterData.GetStarLevelMultiplier(starLevel);
         float totalMultiplier = levelMultiplier * starMultiplier;
 
+        // Apply scaling to base stats
         health = Mathf.RoundToInt(monsterData.baseHP * totalMultiplier);
         attack = Mathf.RoundToInt(monsterData.baseATK * totalMultiplier);
         defense = Mathf.RoundToInt(monsterData.baseDEF * totalMultiplier);
-        speed = Mathf.RoundToInt(monsterData.baseSPD * totalMultiplier);
         energy = Mathf.RoundToInt(monsterData.baseEnergy * totalMultiplier);
 
-        // Combat stats don't scale with level/star (affected by runes instead)
-        criticalRate = monsterData.baseCriticalRate;
-        criticalDamage = monsterData.baseCriticalDamage;
-        accuracy = monsterData.baseAccuracy;
-        resistance = monsterData.baseResistance;
+        // Combat stats scale with star level only (enhanced scaling)
+        criticalRate = monsterData.baseCriticalRate + (starLevel - 1) * 3f;
+        criticalDamage = monsterData.baseCriticalDamage + (starLevel - 1) * 15f;
+        accuracy = monsterData.baseAccuracy + (starLevel - 1) * 2f;
+        resistance = monsterData.baseResistance + (starLevel - 1) * 2f;
     }
 }

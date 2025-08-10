@@ -15,19 +15,19 @@ MonoBehaviour:
   monsterName: Orc
   description: 
   element: 2
-  role: 5
-  roleDescription: Well-rounded stats. Adaptable to many situations.
+  role: 0
+  roleDescription: High HP and Defense. Absorbs damage for the team.
   defaultStarLevel: 4
   modelPrefab: {fileID: 1547161762616007879, guid: 86ee848ec7300044b990cf17667318c9, type: 3}
   defaultLevel: 1
   maxLevel: 60
   baseExperienceRequired: 100
   experienceGrowthRate: 1.5
-  baseHP: 4600
-  baseATK: 215
-  baseDEF: 180
-  baseSPD: 102
-  baseEnergy: 50
+  baseHP: 80
+  baseATK: 15
+  baseDEF: 10
+  baseSPD: 8
+  baseEnergy: 40
   baseCriticalRate: 15
   baseCriticalDamage: 150
   baseAccuracy: 0

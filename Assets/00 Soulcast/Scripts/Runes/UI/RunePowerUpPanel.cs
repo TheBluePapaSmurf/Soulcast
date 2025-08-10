@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
+using static RuneData;
 
 public class RunePowerUpPanel : MonoBehaviour
 {
@@ -114,34 +115,13 @@ public class RunePowerUpPanel : MonoBehaviour
     {
         if (runeToPowerUp == null) return;
 
-        // Calculate cost based on rarity and current level
-        int baseCost = GetBaseCostByRarity(runeToPowerUp.rarity);
-        powerUpCost = Mathf.RoundToInt(baseCost * Mathf.Pow(costMultiplierPerLevel, runeToPowerUp.currentLevel));
+        // ✅ NEW: Use RuneData's enhanced cost calculation
+        powerUpCost = runeToPowerUp.GetCurrentUpgradeCost();
 
-        // Calculate success chance (decreases with level)
-        successChance = Mathf.Max(0.1f, basePowerUpChance - (runeToPowerUp.currentLevel * chanceDecreasePerLevel));
+        // ✅ NEW: Use RuneData's enhanced success chance calculation  
+        successChance = runeToPowerUp.GetCurrentUpgradeSuccessChance();
     }
 
-    int GetBaseCostByRarity(RuneRarity rarity)
-    {
-        switch (rarity)
-        {
-            case RuneRarity.Common:
-                return 100;
-            case RuneRarity.Uncommon:
-                return 200;
-            case RuneRarity.Rare:
-                return 400;
-            case RuneRarity.Epic:
-                return 800;
-            case RuneRarity.Legendary:
-                return 1500;
-            default:
-                return 100;
-        }
-    }
-
-    // REPLACE the UpdateUI method in RunePowerUpPanel.cs to show upgrade preview:
     void UpdateUI()
     {
         if (runeToPowerUp == null) return;
@@ -150,20 +130,29 @@ public class RunePowerUpPanel : MonoBehaviour
         if (runeIcon != null)
             runeIcon.sprite = runeToPowerUp.runeIcon;
 
-        // Show current main stat and what it will become
+        // Show upgrade preview with risk assessment
         if (runeNameText != null)
         {
             string currentMainStat = runeToPowerUp.mainStat?.GetDisplayText() ?? "";
             float nextLevelValue = runeToPowerUp.GetMainStatValueAtLevel(runeToPowerUp.currentLevel + 1);
             string nextMainStatDisplay = $"+{nextLevelValue:F0} {runeToPowerUp.mainStat?.GetStatDisplayName()}";
 
+            // Get risk assessment
+            var risk = runeToPowerUp.GetUpgradeRisk();
+            string riskColor = GetRiskColor(risk);
+            string riskText = GetRiskText(risk);
+
             runeNameText.text = $"{runeToPowerUp.runeName} +{runeToPowerUp.currentLevel}\n" +
-                               $"{currentMainStat} → <color=#00FF00>{nextMainStatDisplay}</color>";
+                               $"{currentMainStat} → <color=#00FF00>{nextMainStatDisplay}</color>\n" +
+                               $"<color={riskColor}>{riskText}</color>";
         }
 
-        // Power-up cost
+        // Enhanced cost display with success chance
         if (powerUpCostText != null)
-            powerUpCostText.text = $"{powerUpCost}";
+        {
+            powerUpCostText.text = $"{powerUpCost:N0} Soul Coins\n" +
+                                  $"<color={(successChance >= 0.5f ? "#00FF00" : "#FF4444")}>Success: {successChance:P0}</color>";
+        }
 
         // Currency display
         UpdateCurrencyDisplay();
@@ -172,6 +161,32 @@ public class RunePowerUpPanel : MonoBehaviour
         UpdateButtonState();
     }
 
+    // ✅ NEW: Risk assessment helpers
+    string GetRiskColor(UpgradeRisk risk)
+    {
+        switch (risk)
+        {
+            case UpgradeRisk.Safe: return "#00FF00";      // Green
+            case UpgradeRisk.Moderate: return "#FFFF00"; // Yellow
+            case UpgradeRisk.Risky: return "#FF8800";    // Orange
+            case UpgradeRisk.Dangerous: return "#FF4444"; // Red
+            case UpgradeRisk.Extreme: return "#FF0088";   // Pink/Magenta
+            default: return "#FFFFFF";
+        }
+    }
+
+    string GetRiskText(UpgradeRisk risk)
+    {
+        switch (risk)
+        {
+            case UpgradeRisk.Safe: return "SAFE UPGRADE";
+            case UpgradeRisk.Moderate: return "Moderate Risk";
+            case UpgradeRisk.Risky: return "RISKY!";
+            case UpgradeRisk.Dangerous: return "DANGEROUS!";
+            case UpgradeRisk.Extreme: return "EXTREME RISK!";
+            default: return "Unknown Risk";
+        }
+    }
 
     void UpdateCurrencyDisplay()
     {
@@ -199,10 +214,18 @@ public class RunePowerUpPanel : MonoBehaviour
             var buttonText = confirmPowerUpButton.GetComponentInChildren<TextMeshProUGUI>();
             if (buttonText != null)
             {
-                buttonText.text = canAfford ? "Power Up!" : "Not Enough Soul Coins";
+                if (canAfford)
+                {
+                    buttonText.text = $"Power Up! ({successChance:P0})";
+                }
+                else
+                {
+                    buttonText.text = "Not Enough Soul Coins";
+                }
             }
         }
     }
+
 
     void ConfirmPowerUp()
     {
@@ -255,20 +278,20 @@ public class RunePowerUpPanel : MonoBehaviour
 
     void ShowPowerUpResult(bool success)
     {
-        // Update the rune name text to show result
         if (runeNameText != null)
         {
             if (success)
             {
-                runeNameText.text = $"<color=#00FF00>{runeToPowerUp.runeName} +{runeToPowerUp.currentLevel} - SUCCESS!</color>";
+                runeNameText.text = $"<color=#00FF00>✓ {runeToPowerUp.runeName} +{runeToPowerUp.currentLevel}</color>\n" +
+                                   $"<color=#00FF00>UPGRADE SUCCESS!</color>";
             }
             else
             {
-                runeNameText.text = $"<color=#FF4444>{runeToPowerUp.runeName} +{runeToPowerUp.currentLevel} - FAILED!</color>";
+                runeNameText.text = $"<color=#FF4444>✗ {runeToPowerUp.runeName} +{runeToPowerUp.currentLevel}</color>\n" +
+                                   $"<color=#FF4444>UPGRADE FAILED!</color>";
             }
         }
 
-        // Update button text to show result
         if (confirmPowerUpButton != null)
         {
             var buttonText = confirmPowerUpButton.GetComponentInChildren<TextMeshProUGUI>();
@@ -276,30 +299,32 @@ public class RunePowerUpPanel : MonoBehaviour
             {
                 if (runeToPowerUp.currentLevel >= runeToPowerUp.maxLevel)
                 {
-                    buttonText.text = "MAX LEVEL";
+                    buttonText.text = "MAX LEVEL REACHED";
                     confirmPowerUpButton.interactable = false;
                 }
                 else
                 {
-                    buttonText.text = success ? "Power Up Again!" : "Try Again!";
-
-                    // Recalculate cost for next upgrade
+                    // Recalculate for next upgrade
                     CalculatePowerUpStats();
 
-                    // Update cost display
+                    buttonText.text = success ?
+                        $"Power Up Again! ({successChance:P0})" :
+                        $"Try Again! ({successChance:P0})";
+
+                    // Update displays
                     if (powerUpCostText != null)
-                        powerUpCostText.text = $"{powerUpCost}";
+                    {
+                        powerUpCostText.text = $"{powerUpCost:N0} Soul Coins\n" +
+                                              $"<color={(successChance >= 0.5f ? "#00FF00" : "#FF4444")}>Success: {successChance:P0}</color>";
+                    }
 
-                    // Update currency display
                     UpdateCurrencyDisplay();
-
-                    // Check if can afford next upgrade
                     UpdateButtonState();
                 }
             }
         }
 
-        // Reset rune name color after a few seconds
+        // Reset after delay
         Invoke(nameof(ResetRuneNameColor), 3f);
     }
 

@@ -15,13 +15,19 @@ MonoBehaviour:
   monsterName: Earth Monster
   description: 
   element: 2
+  role: 5
+  roleDescription: Well-rounded stats. Adaptable to many situations.
   defaultStarLevel: 2
   modelPrefab: {fileID: 4462514469482156001, guid: c962d81b89540834b866cba90a03ec25, type: 3}
-  baseHP: 120
-  baseATK: 20
-  baseDEF: 15
-  baseSPD: 10
-  baseEnergy: 50
+  defaultLevel: 1
+  maxLevel: 60
+  baseExperienceRequired: 100
+  experienceGrowthRate: 1.5
+  baseHP: 80
+  baseATK: 15
+  baseDEF: 10
+  baseSPD: 8
+  baseEnergy: 40
   baseCriticalRate: 5
   baseCriticalDamage: 150
   baseAccuracy: 85
@@ -33,3 +39,5 @@ MonoBehaviour:
   monsterColor: {r: 1, g: 1, b: 1, a: 1}
   aggressiveness: 0.5
   intelligence: 0.5
+  preferredPosition: 3
+  synergyRoles: 
