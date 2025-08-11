@@ -72,7 +72,7 @@ public class MonsterSelectionCard : MonoBehaviour
             monsterNameText.text = monsterData.monsterName;
 
         if (levelText != null)
-            levelText.text = $"Lv.{collectedMonster.level}";
+            levelText.text = $"Lv.{collectedMonster.currentLevel}";
 
         if (starText != null)
             starText.text = $"{collectedMonster.currentStarLevel}★";
@@ -114,7 +114,7 @@ public class MonsterSelectionCard : MonoBehaviour
     private void UpdateStatsDisplay()
     {
         // Get role-adjusted stats for display
-        var stats = collectedMonster.monsterData.GetRoleAdjustedStats(collectedMonster.level, collectedMonster.currentStarLevel);
+        var stats = collectedMonster.monsterData.GetRoleAdjustedStats(collectedMonster.currentLevel, collectedMonster.currentStarLevel);
 
         if (hpText != null)
             hpText.text = stats.health.ToString();

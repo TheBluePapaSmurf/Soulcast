@@ -10,17 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7f6c98aef6708d34098c82ae3366d69c, type: 3}
-  m_Name: Swift
+  m_Name: GuardSet
   m_EditorClassIdentifier: 
-  setName: Fatal
-  setDescription: The Monster's Attack Speed will increase by 25% when you equip
-    a set of 4. Available from ... & ...
-  setIcon: {fileID: 21300000, guid: 71bf330a73480ed4098ed294002db65f, type: 3}
+  setName: Guard
+  setDescription: Engraving 2 pieces of this Rune will increase the Monster's Defense
+    by 15%. Equipping multiple sets will stack up the Rune set Bonus. Available at
+    ... and ...
+  setIcon: {fileID: 21300000, guid: 450af2f92a889a544971faf65c24df1d, type: 3}
   setColor: {r: 1, g: 1, b: 1, a: 1}
   setBonuses:
-  - requiredPieces: 4
-    description: Swift 4 set
+  - requiredPieces: 2
+    description: Guard 2 Set
     bonusStats:
-    - statType: 3
-      value: 25
+    - statType: 2
+      value: 15
       isPercentage: 1

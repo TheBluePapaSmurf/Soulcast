@@ -146,7 +146,7 @@ public class GameSetup : MonoBehaviour
             // Spawn the monster
             SpawnMonster(monsterData, spawnPoint, true, $"(Player {i + 1})");
 
-            Debug.Log($"✅ Spawned player monster {i + 1}: {collectedMonster.monsterData.monsterName} (Lv.{collectedMonster.level})");
+            Debug.Log($"✅ Spawned player monster {i + 1}: {collectedMonster.monsterData.monsterName} (Lv.{collectedMonster.currentLevel})");
         }
     }
 
@@ -195,7 +195,7 @@ public class GameSetup : MonoBehaviour
         var runtimeData = Instantiate(collectedMonster.monsterData);
 
         // Apply level scaling and star bonuses
-        var scaledStats = collectedMonster.GetEffectiveStats();
+        var scaledStats = collectedMonster.CalculateCurrentStats();
 
         // Update base stats with scaled values
         runtimeData.baseHP = scaledStats.health;
@@ -205,7 +205,7 @@ public class GameSetup : MonoBehaviour
         runtimeData.baseEnergy = scaledStats.energy;
 
         // Update name to show level and stars
-        runtimeData.monsterName = $"{collectedMonster.monsterData.monsterName} Lv.{collectedMonster.level}";
+        runtimeData.monsterName = $"{collectedMonster.monsterData.monsterName} Lv.{collectedMonster.currentLevel}";
 
         Debug.Log($"Created runtime data for {runtimeData.monsterName}: HP={runtimeData.baseHP}, ATK={runtimeData.baseATK}");
 

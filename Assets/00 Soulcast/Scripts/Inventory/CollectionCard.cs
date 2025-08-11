@@ -27,7 +27,7 @@ public class CollectionCard : MonoBehaviour
 
         if (levelText != null)
         {
-            levelText.text = $"Lv.{monster.level}";
+            levelText.text = $"Lv.{monster.currentLevel}";
         }
 
         // Set monster sprite - FIXED: Use 'icon' instead of 'sprite'

@@ -10,18 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7f6c98aef6708d34098c82ae3366d69c, type: 3}
-  m_Name: Energy
+  m_Name: RageSet
   m_EditorClassIdentifier: 
-  setName: Energy
-  setDescription: Engraving 2 pieces of this Rune will increase the Monster's HP
-    by 15%. Equipping multiple sets will stack up the Rune set Bonus. Available at
-    ... and ...
-  setIcon: {fileID: 21300000, guid: 2297eba50f7dcb040a23f8cf58a010fc, type: 3}
+  setName: Rage
+  setDescription: The Monster's Critical Damage will increase by 40% when you equip
+    a set of 4. Available from ... & ...
+  setIcon: {fileID: 21300000, guid: 15fa8d96714c36343bf51de1bbff7e62, type: 3}
   setColor: {r: 1, g: 1, b: 1, a: 1}
   setBonuses:
-  - requiredPieces: 0
-    description: Energy 2 Set
+  - requiredPieces: 4
+    description: Rage 4 set
     bonusStats:
-    - statType: 0
-      value: 15
+    - statType: 5
+      value: 40
       isPercentage: 1

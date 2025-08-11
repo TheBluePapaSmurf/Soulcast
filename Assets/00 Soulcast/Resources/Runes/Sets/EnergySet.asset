@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7f6c98aef6708d34098c82ae3366d69c, type: 3}
-  m_Name: Blade
+  m_Name: EnergySet
   m_EditorClassIdentifier: 
-  setName: Blade
-  setDescription: Engraving 2 pieces of this Rune will increase the Monster's Critical
-    Rate by 12%. Equipping multiple sets will stack up the Rune set Bonus. Available
-    at ... and ...
-  setIcon: {fileID: 21300000, guid: 39eeb4a3c7124414186671eab3a7c3b6, type: 3}
+  setName: Energy
+  setDescription: Engraving 2 pieces of this Rune will increase the Monster's HP
+    by 15%. Equipping multiple sets will stack up the Rune set Bonus. Available at
+    ... and ...
+  setIcon: {fileID: 21300000, guid: 2297eba50f7dcb040a23f8cf58a010fc, type: 3}
   setColor: {r: 1, g: 1, b: 1, a: 1}
   setBonuses:
-  - requiredPieces: 2
-    description: Blade 2 Set
+  - requiredPieces: 0
+    description: Energy 2 Set
     bonusStats:
-    - statType: 4
-      value: 12
+    - statType: 0
+      value: 15
       isPercentage: 1

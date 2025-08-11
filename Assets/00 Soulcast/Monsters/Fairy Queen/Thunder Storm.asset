@@ -20,10 +20,13 @@ MonoBehaviour:
   requiresTarget: 1
   attackRange: 1
   energyCost: 0
-  cooldownTurns: 5
-  basePower: 0
+  cooldownTurns: 3
+  basePower: 10000
   usesAttackStat: 1
   ignoresDefense: 0
+  hitCount: 1
+  timeBetweenHits: 0.3
+  divideDamagePerHit: 1
   statusEffects:
   - effectName: Continues Damage
     duration: 2

@@ -22,8 +22,8 @@ MonoBehaviour:
   attackRange: 0
   energyCost: 0
   cooldownTurns: 3
-  basePower: 150
-  usesAttackStat: 0
+  basePower: 0
+  usesAttackStat: 1
   ignoresDefense: 1
   hitCount: 1
   timeBetweenHits: 0.3

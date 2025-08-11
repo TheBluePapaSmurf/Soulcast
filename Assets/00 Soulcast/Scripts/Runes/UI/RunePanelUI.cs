@@ -50,23 +50,90 @@ public class RunePanelUI : MonoBehaviour
     private RuneSetData selectedRuneSet = null;
     private bool isInitialized = false; // 🆕 NEW: Track initialization state
 
+    // ✅ SIMPLE ALTERNATIVE: Add to RunePanelUI.cs Start() method
+
     void Start()
     {
-        if (showDebugLogs) Debug.Log("🔧 RunePanelUI Starting...");
+        if (showDebugLogs) Debug.Log("🔧 RunePanelUI Starting in HUB scene...");
 
         InitializeRunePanel();
+
+        // ✅ NEW: Always refresh when starting in HUB (in case we returned from battle)
+        if (RuneCollectionManager.Instance != null)
+        {
+            int runeCount = RuneCollectionManager.Instance.GetRuneCount();
+            if (showDebugLogs) Debug.Log($"📦 Found {runeCount} runes in collection on HUB start");
+
+            // Force refresh to show any new runes from recent battles
+            RefreshCurrentView();
+        }
 
         if (showDebugLogs) Debug.Log($"✅ RunePanelUI initialized with default view: {(startWithRuneInventoryOpen ? "Rune Inventory" : "Rune Slots")}");
     }
 
-    // 🆕 NEW: Called when GameObject is enabled (when panel is opened)
     void OnEnable()
     {
+        if (showDebugLogs) Debug.Log("🔼 RunePanelUI enabled in HUB scene");
+
+        // Subscribe to cross-scene events
+        RuneCollectionManager.OnRuneCollectionChanged += OnRuneCollectionChanged;
+        RuneCollectionManager.OnReturnToHUB += OnReturnToHUB;
+
+        // Check for pending refresh when panel is enabled
+        CheckForPendingRefresh();
+
         if (autoSetupOnEnable && isInitialized)
         {
             if (showDebugLogs) Debug.Log("🔼 RunePanel enabled, setting up default view...");
             SetupDefaultViewOnEnable();
         }
+    }
+
+    void OnDisable()
+    {
+        // Unsubscribe from events
+        RuneCollectionManager.OnRuneCollectionChanged -= OnRuneCollectionChanged;
+        RuneCollectionManager.OnReturnToHUB -= OnReturnToHUB;
+    }
+
+    private void CheckForPendingRefresh()
+    {
+        if (RuneCollectionManager.Instance != null && RuneCollectionManager.Instance.HasPendingUIRefresh)
+        {
+            if (showDebugLogs) Debug.Log("🔄 Found pending UI refresh from other scene, refreshing now...");
+
+            // Delay refresh slightly to ensure panel is fully setup
+            StartCoroutine(DelayedRefreshFromOtherScene());
+        }
+    }
+
+    // ✅ NEW: Delayed refresh when returning from other scenes
+    private System.Collections.IEnumerator DelayedRefreshFromOtherScene()
+    {
+        yield return new WaitForSeconds(0.2f);
+
+        if (showDebugLogs) Debug.Log("🔄 Executing delayed refresh from other scene...");
+
+        RefreshCurrentView();
+
+        // Clear the pending refresh flag
+        if (RuneCollectionManager.Instance != null)
+        {
+            RuneCollectionManager.Instance.ForceRefreshUI();
+        }
+    }
+
+    // ✅ NEW: Event handler for returning to HUB
+    private void OnReturnToHUB()
+    {
+        if (showDebugLogs) Debug.Log("🏠 OnReturnToHUB event received, refreshing rune panel...");
+        RefreshCurrentView();
+    }
+
+    private void OnRuneCollectionChanged()
+    {
+        if (showDebugLogs) Debug.Log("🔄 Rune collection changed, refreshing UI...");
+        RefreshCurrentView();
     }
 
     // 🆕 NEW: Setup default view when panel is enabled
@@ -266,7 +333,7 @@ public class RunePanelUI : MonoBehaviour
 
         // Always show rune slots when explicitly switching to slots view
         if (runeSlotsPanel != null) runeSlotsPanel.SetActive(true);
-        if (runeInventoryPanel != null) runeInventoryPanel.SetActive(false);
+        if (runeInventoryPanel != null) runeInventoryPanel.SetActive(true);
 
         // 🆕 NEW: Ensure slots are active when showing slots panel
         EnsureRuneSlotsAreActive();
@@ -1042,6 +1109,18 @@ public class RunePanelUI : MonoBehaviour
         for (int i = 0; i < runeSlots.Length; i++)
         {
             Debug.Log($"     runeSlots[{i}]: {(runeSlots[i] != null ? runeSlots[i].name + " (Active: " + runeSlots[i].gameObject.activeSelf + ")" : "NULL")}");
+        }
+    }
+
+    [ContextMenu("Simulate Return From Battle")]
+    public void SimulateReturnFromBattle()
+    {
+        if (RuneCollectionManager.Instance != null)
+        {
+            Debug.Log("🧪 Simulating return from battle with pending refresh...");
+
+            // Simulate that runes were added in another scene
+            RuneCollectionManager.Instance.ForceRefreshUI();
         }
     }
 }

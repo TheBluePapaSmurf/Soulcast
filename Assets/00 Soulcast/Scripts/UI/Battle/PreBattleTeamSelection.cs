@@ -327,7 +327,7 @@ public class PreBattleTeamSelection : MonoBehaviour
         Debug.Log($"🚀 Starting REAL battle with {selectedTeam.Count} monsters:");
         foreach (var monster in selectedTeam)
         {
-            Debug.Log($"- {monster.monsterData.monsterName} (Lv.{monster.level}, {monster.currentStarLevel}★)");
+            Debug.Log($"- {monster.monsterData.monsterName} (Lv.{monster.currentLevel}, {monster.currentStarLevel}★)");
         }
 
         // Save selected team

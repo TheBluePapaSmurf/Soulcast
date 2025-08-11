@@ -170,14 +170,30 @@ public class CombatReward
             }
             else
             {
-                // Use custom manual configuration
+                // ✅ THIS SHOULD BE USED: Use custom manual configuration
+                Debug.Log($"🎯 Using custom guaranteed runes: {customGuaranteedRunes.Count} configured");
+
                 foreach (var customRune in customGuaranteedRunes)
                 {
-                    result.runesEarned.Add(customRune.GenerateRune());
+                    // ✅ Check drop chance
+                    if (UnityEngine.Random.Range(0f, 1f) <= customRune.dropChance)
+                    {
+                        var generatedRune = customRune.GenerateRune();
+                        if (generatedRune != null)
+                        {
+                            result.runesEarned.Add(generatedRune);
+                            Debug.Log($"✅ Generated custom rune: {generatedRune.runeName}");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log($"❌ Custom rune didn't drop (chance: {customRune.dropChance})");
+                    }
                 }
             }
         }
 
+        Debug.Log($"🎁 Final result: {result.runesEarned.Count} runes generated");
         return result;
     }
 
@@ -411,12 +427,24 @@ public class CombatReward
     }
 }
 
+// ✅ UPDATE CombatResult in Assets/00 Soulcast/Scripts/Data/Battle/CombatTemplate.cs
+
 public class CombatResult
 {
     public int soulCoinsEarned;
     public List<RuneData> runesEarned = new List<RuneData>();
     public float experienceEarned;
+
+    // ✅ ADD: Monster experience gained dictionary
+    public Dictionary<string, int> monsterExperienceGained = new Dictionary<string, int>();
+
+    public CombatResult()
+    {
+        runesEarned = new List<RuneData>();
+        monsterExperienceGained = new Dictionary<string, int>();
+    }
 }
+
 
 [System.Serializable]
 public class StarRequirements

@@ -114,7 +114,7 @@ public class SummonResultUI : MonoBehaviour
         CollectedMonster displayMonster = new CollectedMonster(gachaMonster.monsterData);
 
         // Set appropriate values for gacha result display
-        displayMonster.level = 1; // New monsters start at level 1
+        displayMonster.currentLevel = 1; // New monsters start at level 1
         displayMonster.currentStarLevel = gachaMonster.monsterData.defaultStarLevel;
 
         return displayMonster;

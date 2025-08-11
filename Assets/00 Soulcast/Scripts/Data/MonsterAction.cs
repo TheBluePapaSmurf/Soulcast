@@ -100,14 +100,68 @@ public class StatusEffect
     public bool preventAction; // For stun/sleep
 }
 
+// ✅ ENHANCED: Replace the StatModifier class in MonsterAction.cs
+
 [System.Serializable]
 public class StatModifier
 {
+    [Header("Basic Settings")]
     public StatType statType;
     public int modifierAmount;
     public int duration;
     public bool isPermanent = false;
+
+    [Header("Modifier Type")]
+    [Tooltip("If true, modifierAmount is a percentage (e.g., 25 = +25%). If false, it's a flat amount.")]
+    public bool isPercentage = false;
+
+    [Header("Visual Display")]
+    [Tooltip("Display name for this modifier (e.g., 'Rage Boost', 'Purify Blessing')")]
+    public string modifierName = "";
+
+    /// <summary>
+    /// Calculate the actual modifier value for given base stat
+    /// </summary>
+    public int CalculateModifierValue(int baseStat)
+    {
+        if (isPercentage)
+        {
+            // For percentage: modifierAmount = 25 means +25%
+            return Mathf.RoundToInt(baseStat * (modifierAmount / 100f));
+        }
+        else
+        {
+            // For flat: use modifierAmount directly
+            return modifierAmount;
+        }
+    }
+
+    /// <summary>
+    /// Get display text for UI (e.g., "+150 ATK" or "+25% ATK")
+    /// </summary>
+    public string GetDisplayText()
+    {
+        string prefix = modifierAmount >= 0 ? "+" : "";
+        string suffix = isPercentage ? "%" : "";
+        string statName = GetStatDisplayName();
+
+        return $"{prefix}{modifierAmount}{suffix} {statName}";
+    }
+
+    private string GetStatDisplayName()
+    {
+        return statType switch
+        {
+            StatType.Attack => "ATK",
+            StatType.Defense => "DEF",
+            StatType.Speed => "SPD",
+            StatType.HP => "HP",
+            StatType.Energy => "Energy",
+            _ => statType.ToString()
+        };
+    }
 }
+
 
 [System.Serializable]
 public enum StatType

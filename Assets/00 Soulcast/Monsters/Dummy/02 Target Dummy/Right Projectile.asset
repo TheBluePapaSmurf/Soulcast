@@ -22,18 +22,13 @@ MonoBehaviour:
   attackRange: 1
   energyCost: 0
   cooldownTurns: 3
-  basePower: 250
+  basePower: 0
   usesAttackStat: 1
   ignoresDefense: 0
   hitCount: 1
   timeBetweenHits: 0.3
   divideDamagePerHit: 1
-  statusEffects:
-  - effectName: Burn
-    duration: 3
-    damagePerTurn: 50
-    healPerTurn: 0
-    preventAction: 0
+  statusEffects: []
   statModifiers: []
   effectPrefab: {fileID: 0}
   soundEffect: {fileID: 0}

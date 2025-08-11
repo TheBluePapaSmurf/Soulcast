@@ -22,8 +22,8 @@ MonoBehaviour:
   attackRange: 0
   energyCost: 0
   cooldownTurns: 2
-  basePower: 60
-  usesAttackStat: 0
+  basePower: 0
+  usesAttackStat: 1
   ignoresDefense: 0
   hitCount: 4
   timeBetweenHits: 0.3
@@ -34,6 +34,8 @@ MonoBehaviour:
     modifierAmount: 150
     duration: 1
     isPermanent: 0
+    isPercentage: 0
+    modifierName: 
   effectPrefab: {fileID: 0}
   soundEffect: {fileID: 0}
   icon: {fileID: 21300000, guid: d3bb560379c64ce4488b19b881419790, type: 3}

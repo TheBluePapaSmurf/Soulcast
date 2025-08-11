@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -87,23 +87,49 @@ public class RuneSellPanel : MonoBehaviour
 
         // Basic rune info
         if (runeIcon != null)
-            runeIcon.sprite = runeToSell.runeIcon;
+            runeIcon.sprite = runeToSell.runeSprite;
 
         if (runeNameText != null)
-            runeNameText.text = runeToSell.runeName;
+            runeNameText.text = $"{runeToSell.runeName}";
 
         if (runeLevelText != null)
-            runeLevelText.text = $"Level +{runeToSell.currentLevel}";
+            runeLevelText.text = $"Level +{runeToSell.currentLevel} ({runeToSell.rarity})";
 
-        // Sell price
+        // ✅ ENHANCED: Sell price with breakdown
         if (sellPriceText != null)
-            sellPriceText.text = $"{sellPrice}";
+        {
+            int basePrice = GetBasePriceByRarity(runeToSell.rarity);
+            int levelBonus = 0;
+            for (int i = 0; i < runeToSell.currentLevel; i++)
+            {
+                levelBonus += Mathf.RoundToInt(runeToSell.GetUpgradeCost(i) * 0.5f);
+            }
+            int qualityBonus = CalculateQualityBonus(runeToSell);
 
-        // Confirmation text
+            sellPriceText.text = $"{sellPrice:N0}\n" +
+                                $"<size=18><color=#888888>" +
+                                $"Base: {basePrice}" +
+                                (levelBonus > 0 ? $"\nLevel: +{levelBonus}" : "") +
+                                (qualityBonus > 0 ? $"\nQuality: +{qualityBonus}" : "") +
+                                "</color></size>";
+        }
+
+        // ✅ ENHANCED: Confirmation text with more details
         if (confirmationText != null)
         {
-            confirmationText.text = $"Are you sure you want to sell this rune for {sellPrice} Soul Coins?\n\n" +
-                                  "<color=#FF4444><b>This action cannot be undone!</b></color>";
+            string statsText = "";
+            if (runeToSell.mainStat != null)
+            {
+                statsText += $"Main: {runeToSell.mainStat.GetDisplayText()}\n";
+            }
+            if (runeToSell.subStats != null && runeToSell.subStats.Count > 0)
+            {
+                statsText += $"Subs: {runeToSell.subStats.Count} stats\n";
+            }
+
+            confirmationText.text = $"Sell this rune for {sellPrice:N0} Soul Coins?\n\n" +
+                                   $"{statsText}" +
+                                   $"<color=#FF4444><b>This action cannot be undone!</b></color>";
         }
 
         // Currency display
@@ -124,17 +150,47 @@ public class RuneSellPanel : MonoBehaviour
 
     int CalculateSellPrice(RuneData rune)
     {
-        // Base sell price calculation
+        // ✅ FIX: Use GetRuneSellPrice instead of SellRune
+        if (RuneCollectionManager.Instance != null)
+        {
+            return RuneCollectionManager.Instance.GetRuneSellPrice(rune);
+        }
+
+        // Fallback calculation
         int basePrice = GetBasePriceByRarity(rune.rarity);
 
-        // Add bonus for level upgrades (50% of upgrade cost per level)
+        // ✅ ENHANCED: Add bonus for level upgrades and stat quality
         int levelBonus = 0;
         for (int i = 0; i < rune.currentLevel; i++)
         {
             levelBonus += Mathf.RoundToInt(rune.GetUpgradeCost(i) * 0.5f);
         }
 
-        return basePrice + levelBonus;
+        // ✅ NEW: Add small bonus for high-quality sub stats
+        int qualityBonus = CalculateQualityBonus(rune);
+
+        return basePrice + levelBonus + qualityBonus;
+    }
+
+
+    private int CalculateQualityBonus(RuneData rune)
+    {
+        if (rune.subStats == null || rune.subStats.Count == 0)
+            return 0;
+
+        int bonus = 0;
+
+        // Small bonus per sub stat (more sub stats = better rune)
+        bonus += rune.subStats.Count * 10;
+
+        // Extra bonus for percentage stats (usually more valuable)
+        foreach (var stat in rune.subStats)
+        {
+            if (stat.isPercentage)
+                bonus += 20;
+        }
+
+        return bonus;
     }
 
     int GetBasePriceByRarity(RuneRarity rarity)
@@ -156,7 +212,6 @@ public class RuneSellPanel : MonoBehaviour
         }
     }
 
-    // ALTERNATIVE: Simplified ConfirmSell method without success popup:
     void ConfirmSell()
     {
         if (runeToSell == null)
@@ -167,20 +222,41 @@ public class RuneSellPanel : MonoBehaviour
 
         // Store for logging before clearing
         string soldRuneName = runeToSell.runeName;
+        int soldRuneLevel = runeToSell.currentLevel;
+        RuneRarity soldRuneRarity = runeToSell.rarity;
 
-        // Add Soul Coins to player inventory
-        PlayerInventory.Instance.AddSoulCoins(sellPrice);
+        // ✅ CORRECT: Use SellRune only when actually confirming the sale
+        if (RuneCollectionManager.Instance != null)
+        {
+            bool success = RuneCollectionManager.Instance.SellRune(runeToSell, out int actualSellPrice);
 
-        // Remove rune from player inventory
-        PlayerInventory.Instance.RemoveRune(runeToSell);
+            if (success)
+            {
+                Debug.Log($"✅ Sold {soldRuneName} +{soldRuneLevel} ({soldRuneRarity}) for {actualSellPrice} Soul Coins!");
 
-        Debug.Log($"Sold {soldRuneName} for {sellPrice} Soul Coins!");
+                // Call completion callback
+                onSellComplete?.Invoke();
 
-        // Call completion callback
-        onSellComplete?.Invoke();
+                // Hide panel
+                HidePanel();
+            }
+            else
+            {
+                Debug.LogError($"❌ Failed to sell {soldRuneName}!");
+            }
+        }
+        else
+        {
+            // Fallback: manual sell process (should not be used normally)
+            Debug.LogWarning("RuneCollectionManager not found, using fallback sell process");
 
-        // Hide panel
-        HidePanel();
+            PlayerInventory.Instance.AddSoulCoins(sellPrice);
+            PlayerInventory.Instance.RemoveRune(runeToSell);
+
+            Debug.Log($"✅ Sold {soldRuneName} +{soldRuneLevel} for {sellPrice} Soul Coins!");
+            onSellComplete?.Invoke();
+            HidePanel();
+        }
     }
 
     void ShowPanel()

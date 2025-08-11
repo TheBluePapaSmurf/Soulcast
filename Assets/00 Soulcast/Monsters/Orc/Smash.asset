@@ -19,11 +19,14 @@ MonoBehaviour:
   targetType: 0
   requiresTarget: 1
   attackRange: 0
-  energyCost: 10
+  energyCost: 0
   cooldownTurns: 0
-  basePower: 150
+  basePower: 10000
   usesAttackStat: 1
   ignoresDefense: 0
+  hitCount: 1
+  timeBetweenHits: 0.3
+  divideDamagePerHit: 1
   statusEffects:
   - effectName: Continuous Damage
     duration: 1

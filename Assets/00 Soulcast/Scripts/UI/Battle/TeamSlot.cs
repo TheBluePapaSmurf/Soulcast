@@ -69,7 +69,7 @@ public class TeamSlot : MonoBehaviour
 
         // ✅ UPDATED: Separate level and star display
         if (levelText != null)
-            levelText.text = $"Lv.{assignedMonster.level}";
+            levelText.text = $"Lv.{assignedMonster.currentLevel}";
 
         // ✅ NEW: Use StarDisplay component for visual stars
         if (starDisplay != null)

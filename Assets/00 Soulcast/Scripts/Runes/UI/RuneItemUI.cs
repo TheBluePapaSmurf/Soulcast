@@ -114,7 +114,7 @@ public class RuneItemUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         // Original rune icon (for compatibility)
         if (runeIcon != null)
         {
-            runeIcon.sprite = runeData.runeIcon;
+            runeIcon.sprite = runeData.runeSprite;
         }
 
         // Rune type icon
@@ -157,7 +157,7 @@ public class RuneItemUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         if (!useRarityBasedImages)
         {
             // Use original rune icon if rarity system is disabled
-            runeImage.sprite = runeData.runeIcon;
+            runeImage.sprite = runeData.runeSprite;
             if (showDebugLogs) Debug.Log("   📷 Using original rune icon (rarity system disabled)");
             return;
         }
@@ -171,7 +171,7 @@ public class RuneItemUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         else
         {
             // Fallback to original icon
-            runeImage.sprite = runeData.runeIcon;
+            runeImage.sprite = runeData.runeSprite;
             if (showDebugLogs) Debug.LogWarning($"   ⚠️ No rarity sprite found, using fallback for {runeData.runeName}");
         }
     }

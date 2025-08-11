@@ -103,7 +103,7 @@ public class UniversalMonsterCard : MonoBehaviour
     {
         // Create temporary CollectedMonster for display
         var tempMonster = new CollectedMonster(monsterData);
-        tempMonster.level = level;
+        tempMonster.currentLevel = level;
         tempMonster.currentStarLevel = stars;
 
         SetupInternal(tempMonster, CardMode.WavePreview);
@@ -140,7 +140,7 @@ public class UniversalMonsterCard : MonoBehaviour
 
         if (levelText != null)
         {
-            levelText.text = $"Lv.{monster.level}";
+            levelText.text = $"Lv.{monster.currentLevel}";
         }
 
         // Set monster icon
@@ -178,7 +178,7 @@ public class UniversalMonsterCard : MonoBehaviour
     {
         if (monster?.monsterData == null) return;
 
-        var stats = monster.monsterData.GetRoleAdjustedStats(monster.level, monster.currentStarLevel);
+        var stats = monster.monsterData.GetRoleAdjustedStats(monster.currentLevel, monster.currentStarLevel);
 
         if (hpText != null)
             hpText.text = stats.health.ToString();

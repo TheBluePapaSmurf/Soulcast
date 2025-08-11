@@ -18,22 +18,24 @@ MonoBehaviour:
   category: 1
   type: 3
   targetType: 2
-  requiresTarget: 1
-  attackRange: 1
+  requiresTarget: 0
+  attackRange: 2
   energyCost: 0
   cooldownTurns: 3
-  basePower: 500
+  basePower: 0
   usesAttackStat: 1
   ignoresDefense: 0
   hitCount: 1
   timeBetweenHits: 0.3
-  divideDamagePerHit: 1
+  divideDamagePerHit: 0
   statusEffects: []
   statModifiers:
   - statType: 0
-    modifierAmount: 150
+    modifierAmount: 15
     duration: 2
     isPermanent: 0
+    isPercentage: 1
+    modifierName: 
   effectPrefab: {fileID: 0}
   soundEffect: {fileID: 0}
   icon: {fileID: 21300000, guid: f73174cd6ca600347a456d1172155b03, type: 3}

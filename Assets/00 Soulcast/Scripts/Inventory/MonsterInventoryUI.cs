@@ -291,7 +291,7 @@ public class MonsterInventoryUI : MonoBehaviour
 
             // Valid monster
             validMonsters.Add(monster);
-            if (showDebugLogs) Debug.Log($"🐉 Valid Monster {validMonsters.Count}: {monster.monsterData.monsterName} (Level {monster.level}, Stars {monster.currentStarLevel})");
+            if (showDebugLogs) Debug.Log($"🐉 Valid Monster {validMonsters.Count}: {monster.monsterData.monsterName} (Level {monster.currentLevel}, Stars {monster.currentStarLevel})");
         }
 
         if (showDebugLogs) Debug.Log($"📋 Valid monsters (with data): {validMonsters.Count}");
@@ -481,14 +481,14 @@ public class MonsterInventoryUI : MonoBehaviour
             monsterNameText.text = monster.monsterData.monsterName;
         }
 
-        Debug.Log($"📋 Level: {monster.level}, Star: {monster.currentStarLevel}");
+        Debug.Log($"📋 Level: {monster.currentLevel}, Star: {monster.currentStarLevel}");
 
         // Force create a NEW MonsterStats to trigger the constructor debug
-        MonsterStats baseStats = new MonsterStats(monster.monsterData, monster.level, monster.currentStarLevel);
+        MonsterStats baseStats = new MonsterStats(monster.monsterData, monster.currentLevel, monster.currentStarLevel);
 
         if (levelText != null)
         {
-            levelText.text = $"Level {monster.level}";
+            levelText.text = $"Level {monster.currentLevel}";
         }
 
         if (elementText != null)
@@ -504,7 +504,7 @@ public class MonsterInventoryUI : MonoBehaviour
 
 
         // Calculate stats
-        MonsterStats totalStats = monster.GetEffectiveStats();
+        MonsterStats totalStats = monster.CalculateCurrentStats();
 
         // Calculate bonuses
         int healthBonus = totalStats.health - baseStats.health;
@@ -612,6 +612,9 @@ public class MonsterInventoryUI : MonoBehaviour
     {
         if (currentSelectedMonster != null)
         {
+            // ✅ FIX: Call RefreshCombatStats on the monster, not the manager
+            currentSelectedMonster.RefreshStats();
+
             UpdateStatsDisplay(currentSelectedMonster);
             if (showDebugLogs) Debug.Log($"Refreshed stats display for: {currentSelectedMonster.monsterData.monsterName}");
         }

@@ -10,18 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7f6c98aef6708d34098c82ae3366d69c, type: 3}
-  m_Name: Guard
+  m_Name: FatalSet
   m_EditorClassIdentifier: 
-  setName: Guard
-  setDescription: Engraving 2 pieces of this Rune will increase the Monster's Defense
-    by 15%. Equipping multiple sets will stack up the Rune set Bonus. Available at
-    ... and ...
-  setIcon: {fileID: 21300000, guid: 450af2f92a889a544971faf65c24df1d, type: 3}
+  setName: Fatal
+  setDescription: The Monster's Attack Power will increase by 35% when you equip
+    a set of 4. Available from ... & ...
+  setIcon: {fileID: 21300000, guid: a181bbb8896ffed4daaeea48cdfbb22d, type: 3}
   setColor: {r: 1, g: 1, b: 1, a: 1}
   setBonuses:
-  - requiredPieces: 2
-    description: Guard 2 Set
+  - requiredPieces: 4
+    description: Fatal 4 set
     bonusStats:
-    - statType: 2
-      value: 15
+    - statType: 1
+      value: 35
       isPercentage: 1

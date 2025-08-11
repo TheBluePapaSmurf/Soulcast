@@ -1,6 +1,7 @@
 ﻿// Monsters/PlayerInventory.cs (Refactored)
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
+using static Unity.Collections.Unicode;
 
 public class PlayerInventory : MonoBehaviour
 {
@@ -109,7 +110,7 @@ public class PlayerInventory : MonoBehaviour
         var monster = GetMonster(monsterID);
         if (monster != null && RuneCollectionManager.Instance != null)
         {
-            return RuneCollectionManager.Instance.EquipRuneToMonster(monster, slotIndex, rune);
+            return MonsterCollectionManager.Instance.EquipRuneToMonster(monster.uniqueID, slotIndex, rune);
         }
         return false;
     }
@@ -119,7 +120,7 @@ public class PlayerInventory : MonoBehaviour
         var monster = GetMonster(monsterID);
         if (monster != null && RuneCollectionManager.Instance != null)
         {
-            return RuneCollectionManager.Instance.UnequipRuneFromMonster(monster, slotIndex);
+            return MonsterCollectionManager.Instance.UnequipRuneFromMonster(monster.uniqueID, slotIndex);
         }
         return null;
     }

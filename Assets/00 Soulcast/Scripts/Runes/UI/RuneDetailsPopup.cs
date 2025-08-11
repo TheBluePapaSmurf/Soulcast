@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -80,56 +80,105 @@ public class RuneDetailsPopup : MonoBehaviour
     {
         if (currentRune == null) return;
 
-        // Basic rune info
+        // ✅ FIXED: Use runeSprite instead of runeIcon for procedural runes
         if (runeIcon != null)
-            runeIcon.sprite = currentRune.runeIcon;
+            runeIcon.sprite = currentRune.runeSprite; // Changed from runeIcon to runeSprite
 
+        // ✅ ENHANCED: Show procedural rune name with generation info
         if (runeNameText != null)
-            runeNameText.text = currentRune.runeName;
+        {
+            string nameDisplay = currentRune.GetDisplayName(); // Uses +level format
+
+            // Add procedural indicator if applicable
+            if (currentRune.isProceduralGenerated)
+            {
+                string rarityColor = ColorUtility.ToHtmlStringRGB(currentRune.GetRarityColor());
+                nameDisplay = $"<color=#{rarityColor}>{nameDisplay}</color>";
+            }
+
+            runeNameText.text = nameDisplay;
+        }
 
         if (runeLevelText != null)
             runeLevelText.text = $"Level +{currentRune.currentLevel}";
 
-        // Main stat
+        // ✅ ENHANCED: Better main stat display for procedural runes
         if (mainStatText != null && currentRune.mainStat != null)
         {
-            mainStatText.text = $"<b>Main Stat:</b>\n{currentRune.mainStat.GetDisplayText()}";
+            string currentValue = currentRune.mainStat.GetDisplayText();
+
+            // Show upgrade preview if not max level
+            if (currentRune.currentLevel < currentRune.maxLevel)
+            {
+                float nextLevelValue = currentRune.GetMainStatValueAtLevel(currentRune.currentLevel + 1);
+                string suffix = currentRune.mainStat.isPercentage ? "%" : "";
+                string nextDisplay = $"+{nextLevelValue:F1}{suffix} {currentRune.mainStat.GetStatDisplayName()}";
+
+                mainStatText.text = $"<b>Main Stat:</b>\n{currentValue}\n" +
+                                   $"<color=#888888>Next: {nextDisplay}</color>";
+            }
+            else
+            {
+                mainStatText.text = $"<b>Main Stat:</b>\n{currentValue}\n" +
+                                   $"<color=#FFD700>MAX LEVEL</color>";
+            }
         }
 
-        // Sub stats
+        // ✅ ENHANCED: Better sub stats display with color coding
         if (subStatsText != null)
         {
             string subStatsDisplay = "<b>Sub Stats:</b>\n";
 
             if (currentRune.subStats != null && currentRune.subStats.Count > 0)
             {
-                foreach (var subStat in currentRune.subStats)
+                for (int i = 0; i < currentRune.subStats.Count; i++)
                 {
+                    var subStat = currentRune.subStats[i];
                     if (subStat != null)
                     {
-                        subStatsDisplay += $"� {subStat.GetDisplayText()}\n";
+                        // Color code the stat based on type
+                        string statColor = ColorUtility.ToHtmlStringRGB(subStat.GetStatColor());
+                        subStatsDisplay += $"• <color=#{statColor}>{subStat.GetDisplayText()}</color>";
+
+                        // Show if this substat will upgrade at next level (every 3rd level)
+                        if (currentRune.currentLevel < currentRune.maxLevel &&
+                            (currentRune.currentLevel + 1) % 3 == 0)
+                        {
+                            subStatsDisplay += " <color=#888888>(+)</color>";
+                        }
+
+                        subStatsDisplay += "\n";
                     }
                 }
             }
             else
             {
-                subStatsDisplay += "No sub stats";
+                subStatsDisplay += "<color=#888888>No sub stats</color>";
             }
 
             subStatsText.text = subStatsDisplay;
         }
 
-        // Set information
+        // ✅ ENHANCED: Better set information display with fallback
         if (setTenText != null)
         {
             if (currentRune.runeSet != null)
             {
+                // Show set bonuses
+                string setBonusText = "";
+                foreach (var bonus in currentRune.runeSet.setBonuses)
+                {
+                    setBonusText += $"({bonus.requiredPieces}): {bonus.description}\n";
+                }
+
                 setTenText.text = $"<b>Set:</b> {currentRune.runeSet.setName}\n" +
-                                 $"<b>Set Bonus:</b>\n{currentRune.runeSet.GetSetBonusDescription(2)}";
+                                 $"<b>Set Bonuses:</b>\n{setBonusText}";
             }
             else
             {
-                setTenText.text = "<b>Set:</b> None";
+                // ✅ ENHANCED: Better fallback for missing set data
+                setTenText.text = $"<b>Set:</b> {currentRune.runeType} Set\n" +
+                                 $"<color=#888888>Set bonuses loading...</color>";
             }
         }
 
@@ -157,42 +206,89 @@ public class RuneDetailsPopup : MonoBehaviour
             }
         }
 
-        // Power-up button
+        // ✅ ENHANCED: Power-up button with Soul Coins and risk assessment
         if (powerUpButton != null)
         {
-            powerUpButton.interactable = currentRune.currentLevel < currentRune.maxLevel;
+            bool canUpgrade = currentRune.currentLevel < currentRune.maxLevel;
+            int upgradeCost = canUpgrade ? currentRune.GetUpgradeCost(currentRune.currentLevel) : 0;
+            bool canAfford = CurrencyManager.Instance?.CanAffordSoulCoins(upgradeCost) ?? false;
+
+            powerUpButton.interactable = canUpgrade && canAfford;
 
             var powerUpButtonText = powerUpButton.GetComponentInChildren<TextMeshProUGUI>();
             if (powerUpButtonText != null)
             {
-                if (currentRune.currentLevel >= currentRune.maxLevel)
+                if (!canUpgrade)
+                {
                     powerUpButtonText.text = "Max Level";
+                }
+                else if (!canAfford)
+                {
+                    powerUpButtonText.text = $"Need {upgradeCost:N0}\nSoul Coins";
+                }
                 else
-                    powerUpButtonText.text = "Power Up";
+                {
+                    float successChance = currentRune.GetCurrentUpgradeSuccessChance();
+                    var risk = currentRune.GetUpgradeRisk();
+                    string riskText = GetRiskDisplayText(risk);
+
+                    powerUpButtonText.text = $"Power Up\n{upgradeCost:N0} coins\n{riskText}";
+                }
             }
         }
 
-        // Sell button
+        // ✅ ENHANCED: Sell button with proper compatibility check
         if (sellButton != null)
         {
-            sellButton.interactable = !isEquipped;
+            bool canSell = !isEquipped && (RuneCollectionManager.Instance?.ContainsRune(currentRune) ?? false);
+            sellButton.interactable = canSell;
 
             var sellButtonText = sellButton.GetComponentInChildren<TextMeshProUGUI>();
             if (sellButtonText != null)
             {
                 if (isEquipped)
-                    sellButtonText.text = "Can't Sell (Equipped)";
+                {
+                    sellButtonText.text = "Can't Sell\n(Equipped)";
+                }
+                else if (!canSell)
+                {
+                    sellButtonText.text = "Can't Sell\n(Not Owned)";
+                }
                 else
-                    sellButtonText.text = "Sell";
+                {
+                    int sellPrice = RuneCollectionManager.Instance?.GetRuneSellPrice(currentRune) ?? 0;
+                    sellButtonText.text = $"Sell\n{sellPrice:N0} coins";
+                }
             }
         }
     }
 
-    void ShowPopup()
+    private int CalculateRuneSellPrice()
     {
+        if (currentRune == null || RuneCollectionManager.Instance == null)
+            return 0;
+
+        return RuneCollectionManager.Instance.GetRuneSellPrice(currentRune);
+    }
+
+    private int GetBaseSellPriceByRarity(RuneRarity rarity)
+    {
+        return rarity switch
+        {
+            RuneRarity.Common => 50,
+            RuneRarity.Uncommon => 150,
+            RuneRarity.Rare => 400,
+            RuneRarity.Epic => 800,
+            RuneRarity.Legendary => 1500,
+            _ => 50
+        };
+    }
+
+        void ShowPopup()
+        {
         gameObject.SetActive(true);
         Debug.Log($"Showing popup for rune: {currentRune.runeName}");
-    }
+        }
 
     public void HidePopup()
     {
@@ -215,21 +311,26 @@ public class RuneDetailsPopup : MonoBehaviour
         }
     }
 
-    // REPLACE the EquipRune method in RuneDetailsPopup.cs:
-    // REPLACE the EquipRune method in RuneDetailsPopup.cs:
     void EquipRune()
     {
         Debug.Log($"Equipping rune: {currentRune.runeName}");
 
-        // Get the current monster
-        MonsterInventoryUI inventoryUI = FindAnyObjectByType<MonsterInventoryUI>();
-        RunePanelUI runePanelUI = inventoryUI?.GetRunePanelUI();
-        CollectedMonster selectedMonster = runePanelUI?.GetCurrentMonster();
+        // Get the current monster with fallback logic
+        CollectedMonster selectedMonster = GetCurrentMonsterForEquipping();
 
         if (selectedMonster == null)
         {
-            Debug.LogWarning("No monster selected for equipping rune!");
-            return;
+            Debug.LogWarning("No monster available for equipping rune! Opening monster selection...");
+
+            // ✅ NEW: Show monster selection UI or auto-select first available monster
+            AutoSelectFirstAvailableMonster();
+            selectedMonster = GetCurrentMonsterForEquipping();
+
+            if (selectedMonster == null)
+            {
+                Debug.LogError("❌ Still no monster available after auto-selection!");
+                return;
+            }
         }
 
         // Find available slot for this rune
@@ -254,6 +355,7 @@ public class RuneDetailsPopup : MonoBehaviour
             RefreshAllRuneSlots();
 
             // NEW: Refresh the monster stats display
+            MonsterInventoryUI inventoryUI = FindFirstObjectByType<MonsterInventoryUI>();
             if (inventoryUI != null)
             {
                 inventoryUI.RefreshCurrentMonsterStats();
@@ -262,12 +364,72 @@ public class RuneDetailsPopup : MonoBehaviour
             // Call the callback if provided
             onRuneChanged?.Invoke();
 
-            Debug.Log($"Successfully equipped {currentRune.runeName} to {selectedMonster.monsterData.monsterName} slot {targetSlotIndex}");
+            Debug.Log($"✅ Successfully equipped {currentRune.runeName} to {selectedMonster.monsterData.monsterName} slot {targetSlotIndex}");
             HidePopup();
         }
         else
         {
-            Debug.LogError($"Failed to equip {currentRune.runeName}");
+            Debug.LogError($"❌ Failed to equip {currentRune.runeName}");
+        }
+    }
+
+    // ✅ SIMPLE FIX: Add to RuneDetailsPopup.cs
+
+    // ✅ ENHANCED: GetCurrentMonsterForEquipping with better fallbacks
+    private CollectedMonster GetCurrentMonsterForEquipping()
+    {
+        // Try 1: Get from MonsterInventoryUI
+        MonsterInventoryUI inventoryUI = FindFirstObjectByType<MonsterInventoryUI>();
+        if (inventoryUI != null)
+        {
+            CollectedMonster selectedMonster = inventoryUI.GetCurrentSelectedMonster();
+            if (selectedMonster != null)
+            {
+                Debug.Log($"✅ Found selected monster: {selectedMonster.monsterData.monsterName}");
+                return selectedMonster;
+            }
+        }
+
+        // Try 2: Get first available monster as fallback
+        var allMonsters = PlayerInventory.Instance?.GetAllMonsters();
+        if (allMonsters != null && allMonsters.Count > 0)
+        {
+            var firstMonster = allMonsters[0];
+            Debug.Log($"⚠️ Using first available monster as fallback: {firstMonster.monsterData.monsterName}");
+
+            // Try to auto-select this monster in the UI
+            if (inventoryUI != null)
+            {
+                inventoryUI.SelectMonster(firstMonster);
+            }
+
+            return firstMonster;
+        }
+
+        Debug.LogError("❌ No monsters found anywhere!");
+        return null;
+    }
+
+
+    // ✅ NEW: Auto-select first available monster
+    private void AutoSelectFirstAvailableMonster()
+    {
+        Debug.Log("🔄 Auto-selecting first available monster...");
+
+        MonsterInventoryUI inventoryUI = FindFirstObjectByType<MonsterInventoryUI>();
+        if (inventoryUI != null)
+        {
+            var allMonsters = PlayerInventory.Instance?.GetAllMonsters();
+            if (allMonsters != null && allMonsters.Count > 0)
+            {
+                var firstMonster = allMonsters[0];
+                Debug.Log($"🎯 Auto-selecting monster: {firstMonster.monsterData.monsterName}");
+
+                // Force select this monster
+                inventoryUI.SelectMonster(firstMonster);
+            }
+
+            inventoryUI.RefreshCurrentMonsterStats();
         }
     }
 
@@ -411,6 +573,47 @@ public class RuneDetailsPopup : MonoBehaviour
         else
         {
             Debug.LogError("RunePowerUpPanel.Instance is null! Make sure the power-up panel exists in the scene.");
+        }
+    }
+
+    // ✅ FIX: Update RuneDetailsPopup.cs helper method
+    private string GetRiskDisplayText(RuneData.UpgradeRisk risk)
+    {
+        switch (risk)
+        {
+            case RuneData.UpgradeRisk.Safe: return "Safe";
+            case RuneData.UpgradeRisk.Moderate: return "Medium Risk";
+            case RuneData.UpgradeRisk.Risky: return "Risky";
+            case RuneData.UpgradeRisk.Dangerous: return "Dangerous";
+            case RuneData.UpgradeRisk.Extreme: return "EXTREME";
+            default: return "Unknown";
+        }
+    }
+
+    // ✅ FIX: Update RunePowerUpPanel.cs helper methods
+    string GetRiskColor(RuneData.UpgradeRisk risk)
+    {
+        switch (risk)
+        {
+            case RuneData.UpgradeRisk.Safe: return "#00FF00";      // Green
+            case RuneData.UpgradeRisk.Moderate: return "#FFFF00"; // Yellow
+            case RuneData.UpgradeRisk.Risky: return "#FF8800";    // Orange
+            case RuneData.UpgradeRisk.Dangerous: return "#FF4444"; // Red
+            case RuneData.UpgradeRisk.Extreme: return "#FF0088";   // Pink/Magenta
+            default: return "#FFFFFF";
+        }
+    }
+
+    string GetRiskText(RuneData.UpgradeRisk risk)
+    {
+        switch (risk)
+        {
+            case RuneData.UpgradeRisk.Safe: return "SAFE UPGRADE";
+            case RuneData.UpgradeRisk.Moderate: return "Moderate Risk";
+            case RuneData.UpgradeRisk.Risky: return "RISKY!";
+            case RuneData.UpgradeRisk.Dangerous: return "DANGEROUS!";
+            case RuneData.UpgradeRisk.Extreme: return "EXTREME RISK!";
+            default: return "Unknown Risk";
         }
     }
 

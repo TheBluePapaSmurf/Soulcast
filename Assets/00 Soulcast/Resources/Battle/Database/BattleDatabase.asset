@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   allCombats:
   - {fileID: 11400000, guid: ef5ba76f87cf6274cb70f09be7165136, type: 2}
+  - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
   regions:
   - regionId: 1
     regionName: Hoofdstuk 1
@@ -22,3 +23,21 @@ MonoBehaviour:
       levelName: 1
       combats:
       - {fileID: 11400000, guid: ef5ba76f87cf6274cb70f09be7165136, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
+    - levelId: 2
+      levelName: 2
+      combats:
+      - {fileID: 11400000, guid: ef5ba76f87cf6274cb70f09be7165136, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}
+      - {fileID: 11400000, guid: 78cd3b69a8b5cc94f994b1e485153e3d, type: 2}

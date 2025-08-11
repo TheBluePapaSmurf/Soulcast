@@ -21,9 +21,12 @@ MonoBehaviour:
   attackRange: 1
   energyCost: 0
   cooldownTurns: 2
-  basePower: 25
+  basePower: 0
   usesAttackStat: 1
   ignoresDefense: 0
+  hitCount: 1
+  timeBetweenHits: 0.3
+  divideDamagePerHit: 1
   statusEffects: []
   statModifiers: []
   effectPrefab: {fileID: 1530079257049038143, guid: 2a5587380fb5b5f4cab71b8651570590, type: 3}

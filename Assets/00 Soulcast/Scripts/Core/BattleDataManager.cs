@@ -81,7 +81,7 @@ public class BattleDataManager : MonoBehaviour
 
             foreach (var monster in selectedTeam)
             {
-                Debug.Log($"  - {monster.monsterData.monsterName} (Lv.{monster.level}, {monster.currentStarLevel}★)");
+                Debug.Log($"  - {monster.monsterData.monsterName} (Lv.{monster.currentLevel}, {monster.monsterData.defaultStarLevel}★)");
             }
         }
     }

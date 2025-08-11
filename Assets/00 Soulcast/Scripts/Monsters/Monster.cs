@@ -605,13 +605,29 @@ public class Monster : MonoBehaviour
         return finalDamage;
     }
 
+    // ✅ FIX: Replace ExecuteHealAction in Monster.cs
+
     private void ExecuteHealAction(MonsterAction action, Monster target)
     {
         if (target == null) target = this; // Default to self
 
+        // ✅ ENHANCED: Calculate heal amount with attack stat support
         int healAmount = action.basePower;
+
+        if (action.usesAttackStat)
+        {
+            healAmount += currentATK; // Add monster's attack to healing
+            Debug.Log($"💚 {monsterData.monsterName} heals for {healAmount} (base: {action.basePower} + ATK: {currentATK})");
+        }
+        else
+        {
+            Debug.Log($"💚 {monsterData.monsterName} heals for {healAmount} (fixed amount)");
+        }
+
+        // Apply the healing
         target.Heal(healAmount);
     }
+
 
     private void ExecuteBuffAction(MonsterAction action, Monster target)
     {
@@ -664,6 +680,8 @@ public class Monster : MonoBehaviour
         Debug.Log($"{monsterData.monsterName} is affected by {effect.effectName} for {effect.duration} turns");
     }
 
+    // ✅ ENHANCED: Replace AddStatModifier method in Monster.cs
+
     public void AddStatModifier(StatModifier modifier)
     {
         ActiveStatModifier activeModifier = new ActiveStatModifier
@@ -676,34 +694,87 @@ public class Monster : MonoBehaviour
         // Apply the modifier immediately
         ApplyStatModifierToStats(modifier);
 
-        Debug.Log($"{monsterData.monsterName} gets {modifier.statType} modified by {modifier.modifierAmount}");
+        // ✅ ENHANCED: Better logging with percentage support
+        string modifierText = modifier.GetDisplayText();
+        string durationText = modifier.isPermanent ? "permanently" : $"for {modifier.duration} turns";
+        string modifierNameText = !string.IsNullOrEmpty(modifier.modifierName) ? $" ({modifier.modifierName})" : "";
+
+        Debug.Log($"✨ {monsterData.monsterName} gets {modifierText}{modifierNameText} {durationText}");
     }
+
+
+    // ✅ CORRECTED: Replace ApplyStatModifierToStats method in Monster.cs
 
     private void ApplyStatModifierToStats(StatModifier modifier)
     {
+        int actualModifierValue = 0;
+
         switch (modifier.statType)
         {
             case StatType.Attack:
-                currentATK += modifier.modifierAmount;
+                // ✅ FIX: Use monsterData.baseATK instead of baseATK
+                actualModifierValue = modifier.CalculateModifierValue(monsterData.baseATK);
+                currentATK += actualModifierValue;
+                Debug.Log($"📊 {monsterData.monsterName} ATK: {monsterData.baseATK} + {actualModifierValue} = {currentATK}");
                 break;
+
             case StatType.Defense:
-                currentDEF += modifier.modifierAmount;
+                // ✅ FIX: Use monsterData.baseDEF instead of baseDEF
+                actualModifierValue = modifier.CalculateModifierValue(monsterData.baseDEF);
+                currentDEF += actualModifierValue;
+                Debug.Log($"📊 {monsterData.monsterName} DEF: {monsterData.baseDEF} + {actualModifierValue} = {currentDEF}");
                 break;
+
             case StatType.Speed:
-                currentSPD += modifier.modifierAmount;
+                // ✅ FIX: Use monsterData.baseSPD instead of baseSPD
+                actualModifierValue = modifier.CalculateModifierValue(monsterData.baseSPD);
+                currentSPD += actualModifierValue;
+                Debug.Log($"📊 {monsterData.monsterName} SPD: {monsterData.baseSPD} + {actualModifierValue} = {currentSPD}");
                 break;
+
             case StatType.HP:
-                // For HP, we heal/damage instead of modifying max HP
-                if (modifier.modifierAmount > 0)
-                    Heal(modifier.modifierAmount);
+                // For HP modifiers, we heal/damage instead of modifying max HP
+                if (modifier.isPercentage)
+                {
+                    // ✅ FIX: Use monsterData.baseHP instead of baseHP
+                    actualModifierValue = modifier.CalculateModifierValue(monsterData.baseHP);
+                }
                 else
-                    TakeDamage(-modifier.modifierAmount);
+                {
+                    // Flat healing amount
+                    actualModifierValue = modifier.modifierAmount;
+                }
+
+                if (actualModifierValue > 0)
+                {
+                    Heal(actualModifierValue);
+                    Debug.Log($"💚 {monsterData.monsterName} healed for {actualModifierValue} HP");
+                }
+                else
+                {
+                    TakeDamage(-actualModifierValue);
+                    Debug.Log($"💔 {monsterData.monsterName} took {-actualModifierValue} HP damage");
+                }
                 break;
+
             case StatType.Energy:
-                currentEnergy = Mathf.Max(0, currentEnergy + modifier.modifierAmount);
+                if (modifier.isPercentage)
+                {
+                    // ✅ FIX: Use monsterData.baseEnergy instead of baseEnergy
+                    actualModifierValue = modifier.CalculateModifierValue(monsterData.baseEnergy);
+                }
+                else
+                {
+                    actualModifierValue = modifier.modifierAmount;
+                }
+
+                currentEnergy = Mathf.Max(0, currentEnergy + actualModifierValue);
+                Debug.Log($"⚡ {monsterData.monsterName} energy: {currentEnergy}");
                 break;
         }
     }
+
+
 
     public void TakeDamage(int damage, bool isCritical = false)
     {

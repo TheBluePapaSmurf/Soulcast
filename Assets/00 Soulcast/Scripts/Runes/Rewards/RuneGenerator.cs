@@ -143,9 +143,11 @@ public static class RuneGenerator
         public float weight;
     }
 
-    // Main generation method (unchanged)
+
     public static RuneData GenerateRune(RuneReward runeReward)
     {
+        Debug.Log($"🎲 RuneGenerator.GenerateRune called for {runeReward.runeSet} {runeReward.runeSlot} ({runeReward.rarity})");
+
         if (!runeReward.IsValid())
         {
             Debug.LogError("Invalid RuneReward configuration!");
@@ -153,7 +155,8 @@ public static class RuneGenerator
         }
 
         // Create new RuneData instance
-        var rune = ScriptableObject.CreateInstance<RuneData>();
+        var rune = new RuneData(runeReward.runeSet, runeReward.runeSlot, runeReward.rarity);
+        Debug.Log($"✅ Created NEW procedural RuneData instance: {rune.uniqueID}");
 
         // Set basic properties
         rune.runeName = GenerateRuneName(runeReward.runeSet, runeReward.runeSlot, runeReward.rarity);
@@ -163,8 +166,21 @@ public static class RuneGenerator
         rune.rarity = runeReward.rarity;
         rune.currentLevel = 0; // Always start at level 0
 
-        // Set rune set data
+        // ✅ CRITICAL FIX: Set the ScriptableObject's name property!
+        rune.name = rune.runeName; // This is crucial for equipping to work!
+
+        // ✅ FIX: Set rune set data
         rune.runeSet = GetRuneSetData(runeReward.runeSet);
+
+        // ✅ DEBUG: Log runeSet assignment
+        if (rune.runeSet != null)
+        {
+            Debug.Log($"✅ Assigned RuneSetData: {rune.runeSet.setName}");
+        }
+        else
+        {
+            Debug.LogError($"❌ Failed to load RuneSetData for {runeReward.runeSet}!");
+        }
 
         // Generate main stat
         rune.mainStat = runeReward.mainStatRange.CreateRandomStat();
@@ -172,11 +188,15 @@ public static class RuneGenerator
         // Generate substats
         rune.subStats = GenerateSubStats(runeReward);
 
+        Debug.Log($"🎁 Generated procedural rune: {rune.runeName}");
+        Debug.Log($"   ScriptableObject.name: '{rune.name}'"); // ← This should now show the name
+        Debug.Log($"   Main Stat: {rune.mainStat.statType} {rune.mainStat.value:F1}{(rune.mainStat.isPercentage ? "%" : "")}");
+        Debug.Log($"   Sub Stats: {rune.subStats.Count}");
+        Debug.Log($"   RuneSet: {(rune.runeSet != null ? rune.runeSet.setName : "NULL")}");
+
         return rune;
     }
 
-    // Rest of the methods remain the same...
-    // (GenerateSubStats, GetAvailableSubStats, etc.)
 
     private static List<RuneStat> GenerateSubStats(RuneReward runeReward)
     {

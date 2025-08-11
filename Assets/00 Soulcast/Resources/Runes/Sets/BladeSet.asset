@@ -10,17 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7f6c98aef6708d34098c82ae3366d69c, type: 3}
-  m_Name: Fatal
+  m_Name: BladeSet
   m_EditorClassIdentifier: 
-  setName: Fatal
-  setDescription: The Monster's Attack Power will increase by 35% when you equip
-    a set of 4. Available from ... & ...
-  setIcon: {fileID: 21300000, guid: a181bbb8896ffed4daaeea48cdfbb22d, type: 3}
+  setName: Blade
+  setDescription: Engraving 2 pieces of this Rune will increase the Monster's Critical
+    Rate by 12%. Equipping multiple sets will stack up the Rune set Bonus. Available
+    at ... and ...
+  setIcon: {fileID: 21300000, guid: 39eeb4a3c7124414186671eab3a7c3b6, type: 3}
   setColor: {r: 1, g: 1, b: 1, a: 1}
   setBonuses:
-  - requiredPieces: 4
-    description: Fatal 4 set
+  - requiredPieces: 2
+    description: Blade 2 Set
     bonusStats:
-    - statType: 1
-      value: 35
+    - statType: 4
+      value: 12
       isPercentage: 1

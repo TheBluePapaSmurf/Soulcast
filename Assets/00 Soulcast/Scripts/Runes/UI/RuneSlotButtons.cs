@@ -167,9 +167,9 @@ public class RuneSlotButton : MonoBehaviour
     {
         if (runeSlotIcon != null)
         {
-            if (hasRune && equippedRune.runeIcon != null)
+            if (hasRune && equippedRune.runeSprite != null)
             {
-                runeSlotIcon.sprite = equippedRune.runeIcon;
+                runeSlotIcon.sprite = equippedRune.runeSprite;
                 runeSlotIcon.color = Color.white; // Keep icon visible over rarity background
                 runeSlotIcon.gameObject.SetActive(true);
                 if (showDebugLogs) Debug.Log($"   ✅ Updated runeSlotIcon for slot {slotIndex}");

@@ -130,7 +130,7 @@ public class CollectionUI : MonoBehaviour
         switch (sortIndex)
         {
             case 0: // Date Obtained
-                sortedMonsters = sortedMonsters.OrderByDescending(m => m.dateObtained).ToList();
+                sortedMonsters = sortedMonsters.OrderByDescending(m => m.acquisitionDate).ToList();
                 break;
             case 1: // Name A-Z
                 sortedMonsters = sortedMonsters.OrderBy(m => m.monsterData.monsterName).ToList();

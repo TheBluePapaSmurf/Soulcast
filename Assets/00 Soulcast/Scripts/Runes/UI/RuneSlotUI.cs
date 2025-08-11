@@ -96,7 +96,7 @@ public class RuneSlotUI : MonoBehaviour, IDropHandler
             runeIcon.gameObject.SetActive(hasRune);
             if (hasRune)
             {
-                runeIcon.sprite = equippedRune.runeIcon;
+                runeIcon.sprite = equippedRune.runeSprite;
             }
         }
 

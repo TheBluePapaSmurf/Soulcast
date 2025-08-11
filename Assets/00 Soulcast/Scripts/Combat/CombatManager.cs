@@ -10,6 +10,8 @@ public class CombatManager : MonoBehaviour
     public List<Monster> enemyMonsters = new List<Monster>();
     public DifficultySettings currentDifficulty;
 
+    private int maxPlayerMonsters = 0;
+
     [Header("Combat State")]
     public bool combatActive = false;
     public Monster currentActiveMonster;
@@ -629,6 +631,8 @@ public class CombatManager : MonoBehaviour
         }
     }
 
+    // ✅ REPLACE the HandleVictory method in CombatManager.cs
+
     private void HandleVictory()
     {
         Debug.Log("🎉 === BATTLE VICTORY === 🎉");
@@ -638,25 +642,129 @@ public class CombatManager : MonoBehaviour
         {
             var battleData = BattleDataManager.Instance.GetCurrentBattleData();
 
-            // Give rewards
-            GiveBattleRewards(battleData);
+            // Generate rewards
+            var rewards = GenerateBattleRewards(battleData);
 
-            // ✅ NEW: Update progression using BattleProgressionManager
-            if (BattleProgressionManager.Instance != null)
+            // Calculate stars earned (you can make this more sophisticated)
+            int starsEarned = CalculateStarsEarned();
+
+            // ✅ NEW: Show victory sequence instead of immediate scene transition
+            if (VictoryRewardManager.Instance != null)
             {
-                BattleProgressionManager.Instance.CompleteBattle(
-                    battleData.regionId,
-                    battleData.levelId,
-                    battleData.battleSequenceId,
-                    3, // Stars earned (you can make this dynamic)
-                    Time.time // Completion time
-                );
+                VictoryRewardManager.Instance.ShowVictorySequence(battleData, rewards, starsEarned);
+            }
+            else
+            {
+                Debug.LogWarning("VictoryRewardManager.Instance is null! Using fallback victory handling.");
+                StartCoroutine(FallbackVictoryHandling(battleData, rewards, starsEarned));
             }
         }
-
-        // Show victory UI and then return to world map
-        StartCoroutine(ShowVictoryAndReturn());
+        else
+        {
+            Debug.LogError("No valid battle data found for victory handling!");
+        }
     }
+
+    // ✅ FIX the GenerateBattleRewards method in CombatManager.cs
+
+    private CombatResult GenerateBattleRewards(BattleSetupData battleData)
+    {
+        var combatTemplate = battleData.combatTemplate;
+        if (combatTemplate?.rewards == null)
+        {
+            Debug.LogWarning("No combat template or rewards found! Using fallback rewards.");
+            return new CombatResult
+            {
+                soulCoinsEarned = 100, // Default reward
+                runesEarned = new List<RuneData>(),
+            };
+        }
+
+        Debug.Log($"🎁 Generating rewards for {combatTemplate.combatName}:");
+        Debug.Log($"   Use Region-Based Drop Rates: {combatTemplate.rewards.useRegionBasedDropRates}");
+        Debug.Log($"   Guaranteed Rune Drop: {combatTemplate.rewards.guaranteedRuneDrop}");
+        Debug.Log($"   Custom Guaranteed Runes: {combatTemplate.rewards.customGuaranteedRunes.Count}");
+
+        // Use existing reward system
+        var result = combatTemplate.rewards.GenerateRewards(
+            battleData.regionId,
+            battleData.levelId,
+            battleData.battleSequenceId
+        );
+
+        // Enhanced logging
+        Debug.Log($"💰 Generated {result.soulCoinsEarned} Soul Coins");
+        Debug.Log($"🎁 Generated {result.runesEarned.Count} Runes:");
+
+        foreach (var rune in result.runesEarned)
+        {
+            Debug.Log($"   - {rune.runeName} ({rune.rarity})");
+            Debug.Log($"     Main: {rune.mainStat.statType} {rune.mainStat.value:F1}{(rune.mainStat.isPercentage ? "%" : "")}");
+            Debug.Log($"     Subs: {rune.subStats.Count} stats");
+        }
+
+        return result;
+    }
+
+    // ✅ NEW: Calculate stars earned based on performance
+    private int CalculateStarsEarned()
+    {
+        // You can make this more sophisticated based on:
+        // - Time taken
+        // - Monsters lost
+        // - Perfect timing hits
+        // - etc.
+
+        int stars = 3; // Start with max stars
+
+        // Reduce stars based on losses
+        int monstersLost = maxPlayerMonsters - playerMonsters.Count(m => m.isAlive);
+        stars = Mathf.Max(1, stars - monstersLost);
+
+        return stars;
+    }
+
+    // ✅ NEW: Fallback victory handling if VictoryRewardManager is missing
+    private IEnumerator FallbackVictoryHandling(BattleSetupData battleData, CombatResult rewards, int stars)
+    {
+        Debug.Log("Using fallback victory handling...");
+
+        // Apply rewards directly
+        ApplyRewardsDirectly(rewards);
+
+        // Update progression
+        if (BattleProgressionManager.Instance != null)
+        {
+            BattleProgressionManager.Instance.CompleteBattle(
+                battleData.regionId,
+                battleData.levelId,
+                battleData.battleSequenceId,
+                stars,
+                Time.time
+            );
+        }
+
+        // Wait and return to world map
+        yield return new WaitForSeconds(3f);
+
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.ReturnToWorldMapAfterBattle();
+        }
+    }
+
+    private void ApplyRewardsDirectly(CombatResult rewards)
+    {
+        if (CurrencyManager.Instance != null)
+        {
+            CurrencyManager.Instance.AddSoulCoins(rewards.soulCoinsEarned);
+        }
+
+        // Add other rewards as needed
+    }
+
+    // ✅ UPDATE: Remove the old ShowVictoryAndReturn coroutine as it's replaced by VictoryRewardManager
+
 
     private void GiveBattleRewards(BattleSetupData battleData)
     {
