@@ -583,9 +583,13 @@ public class GachaUI : MonoBehaviour
         }
 
         // 🆕 NEW: Disable altar interaction when opening GachaUI
-        if (AltarInteraction.Instance != null)
+        var gachaAltars = FindObjectsByType<AltarInteraction>(FindObjectsSortMode.None);
+        foreach (var altar in gachaAltars)
         {
-            AltarInteraction.Instance.SetInteractionEnabled(false);
+            if (altar.altarType == AltarType.Gacha)
+            {
+                altar.SetInteractionEnabled(false);
+            }
         }
 
         if (showDebugLogs) Debug.Log("🎮 Opening Gacha UI...");
@@ -604,9 +608,13 @@ public class GachaUI : MonoBehaviour
                     if (showDebugLogs) Debug.Log("⚠️ Cutscene started during camera transition, not opening Gacha UI");
 
                     // 🆕 NEW: Re-enable interaction if we can't open UI
-                    if (AltarInteraction.Instance != null)
+                    var gachaAltars = FindObjectsByType<AltarInteraction>(FindObjectsSortMode.None);
+                    foreach (var altar in gachaAltars)
                     {
-                        AltarInteraction.Instance.SetInteractionEnabled(true);
+                        if (altar.altarType == AltarType.Gacha)
+                        {
+                            altar.SetInteractionEnabled(true);
+                        }
                     }
                     return;
                 }
@@ -636,16 +644,19 @@ public class GachaUI : MonoBehaviour
         {
             CameraController.Instance.ReturnToDefault();
         }
-
-        // 🔧 UPDATED: Re-enable altar interaction and notify AltarInteraction
-        if (AltarInteraction.Instance != null)
-        {
-            Debug.Log("🔄 Notifying AltarInteraction that GachaUI is closed");
-            AltarInteraction.Instance.OnGachaUIClosed(); // This will re-enable interaction
-        }
         else
         {
             Debug.LogWarning("⚠️ AltarInteraction.Instance is null!");
+        }
+
+        Debug.Log("🔄 Notifying Gacha Altars that GachaUI is closed");
+        var gachaAltars = FindObjectsByType<AltarInteraction>(FindObjectsSortMode.None);
+        foreach (var altar in gachaAltars)
+        {
+            if (altar.altarType == AltarType.Gacha)
+            {
+                altar.OnSystemUIClosed(); // This will re-enable interaction
+            }
         }
     }
 

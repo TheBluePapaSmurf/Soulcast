@@ -183,6 +183,18 @@ public class MonsterCollectionManager : MonoBehaviour
         return GetUniqueMonsterTypes().Count;
     }
 
+    /// <summary>
+    /// Remove a monster from the collection
+    /// </summary>
+    public void RemoveMonster(CollectedMonster monster)
+    {
+        if (monster == null) return;
+
+        collectedMonsters.Remove(monster);
+        Debug.Log($"🗑️ Removed monster: {monster.GetDisplayName()}");
+    }
+
+
     // ========== MONSTER PROGRESSION ==========
 
     /// <summary>

@@ -6,10 +6,19 @@ using System.Collections.Generic;
 using System.Collections;
 using UnityEngine.EventSystems;
 
+public enum AltarType
+{
+    Gacha,
+    Upgrade
+}
+
 public class AltarInteraction : MonoBehaviour
 {
+    [Header("Altar Configuration")]
+    public AltarType altarType = AltarType.Gacha;
+
     [Header("UI References")]
-    public RectTransform gachaButtonRow;
+    public RectTransform buttonRow;
     public Canvas parentCanvas;
 
     [Header("🆕 Main Buttons Management")]
@@ -19,10 +28,10 @@ public class AltarInteraction : MonoBehaviour
     [SerializeField] private float mainButtonsAnimationDuration = 0.3f;
     [SerializeField] private Ease mainButtonsAnimationEase = Ease.OutCubic;
 
-    [Header("🎮 GachaUI Integration")]
+    [Header("🎮 System Integration")]
     [SerializeField] private GachaUI gachaUI;
-    [SerializeField] private bool autoFindGachaUI = true;
-    [SerializeField] private bool autoHideGachaButtonsOnSummon = true;
+    [SerializeField] private MonsterUpgradeManager upgradeManager;
+    [SerializeField] private bool autoFindSystems = true;
 
     [Header("🔒 Interaction Control")]
     [SerializeField] private bool allowInteraction = true;
@@ -30,13 +39,9 @@ public class AltarInteraction : MonoBehaviour
     [SerializeField] private float blockedClickCooldown = 0.5f;
 
     [Header("🎬 Magic Aura Effect")]
-    [Tooltip("CFXR3 Magic Aura effect to sync with GachaButtonRow")]
+    [Tooltip("CFXR3 Magic Aura effect to sync with ButtonRow")]
     public GameObject magicAuraEffect;
     [SerializeField] private bool autoFindMagicAura = true;
-
-    [Header("Layout Fix")]
-    [Tooltip("Drag the invisible button that should ignore layout here")]
-    public RectTransform layoutIgnoreButton;
 
     [Header("Audio")]
     [Tooltip("Audio clip for popup sound")]
@@ -76,32 +81,30 @@ public class AltarInteraction : MonoBehaviour
 
     // Layout Group
     private HorizontalLayoutGroup horizontalLayoutGroup;
-    private LayoutElement layoutIgnoreButtonElement;
 
-    // MainButtons management
-    private CanvasGroup mainButtonsCanvasGroup;
-    private Vector3 mainButtonsOriginalScale;
+    // MainButtons management - SHARED ACROSS ALL ALTARS
+    private static GameObject sharedMainButtons;
+    private static CanvasGroup sharedMainButtonsCanvasGroup;
+    private static Vector3 sharedMainButtonsOriginalScale;
+    private static int activeAltarCount = 0;
 
     // UI state tracking
-    private bool gachaUIIsOpen = false;
-    private Button summonButton;
+    private bool systemUIIsOpen = false;
 
     // Interaction blocking
     private bool isInteractionBlocked = false;
     private float lastBlockedClickTime = 0f;
 
-    public static AltarInteraction Instance { get; private set; }
+    // Type-specific buttons
+    private Button primaryActionButton;
+
+    // ✅ REMOVED SINGLETON - Each altar is independent now
 
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        // Count active altars
+        activeAltarCount++;
+        if (showDebugLogs) Debug.Log($"🏺 {altarType} Altar awakened. Total active altars: {activeAltarCount}");
     }
 
     void Start()
@@ -110,14 +113,23 @@ public class AltarInteraction : MonoBehaviour
         if (playerCamera == null)
             playerCamera = FindAnyObjectByType<Camera>();
 
-        if (gachaButtonRow == null)
-            gachaButtonRow = GameObject.Find("GachaButtonRow")?.GetComponent<RectTransform>();
+        // Auto-find button row based on altar type
+        if (buttonRow == null)
+        {
+            string buttonRowName = altarType == AltarType.Gacha ? "GachaButtonRow" : "UpgradeButtonRow";
+            buttonRow = GameObject.Find(buttonRowName)?.GetComponent<RectTransform>();
+
+            if (buttonRow == null && showDebugLogs)
+            {
+                Debug.LogWarning($"⚠️ {buttonRowName} not found! Please assign manually.");
+            }
+        }
 
         if (parentCanvas == null)
             parentCanvas = FindAnyObjectByType<Canvas>();
 
-        SetupMainButtonsReference();
-        SetupGachaUIIntegration();
+        SetupSharedMainButtonsReference();
+        SetupSystemIntegration();
         SetupMagicAuraEffect();
         SetupAudioSource();
 
@@ -125,74 +137,72 @@ public class AltarInteraction : MonoBehaviour
         EnableClickInput();
     }
 
-    void SetupMainButtonsReference()
+    void SetupSharedMainButtonsReference()
     {
-        if (mainButtons == null)
+        // Use shared reference for MainButtons across all altars
+        if (sharedMainButtons == null)
         {
-            mainButtons = GameObject.Find("MainButtons");
-            if (mainButtons == null)
+            sharedMainButtons = GameObject.Find("MainButtons");
+
+            if (sharedMainButtons != null)
             {
-                Canvas canvas = FindAnyObjectByType<Canvas>();
-                if (canvas != null)
+                sharedMainButtonsOriginalScale = sharedMainButtons.transform.localScale;
+                sharedMainButtonsCanvasGroup = sharedMainButtons.GetComponent<CanvasGroup>();
+                if (sharedMainButtonsCanvasGroup == null)
                 {
-                    Transform canvasTransform = canvas.transform;
-                    for (int i = 0; i < canvasTransform.childCount; i++)
-                    {
-                        Transform child = canvasTransform.GetChild(i);
-                        if (child.name == "MainButtons")
-                        {
-                            mainButtons = child.gameObject;
-                            break;
-                        }
-                    }
+                    sharedMainButtonsCanvasGroup = sharedMainButtons.AddComponent<CanvasGroup>();
                 }
-            }
-        }
 
-        if (mainButtons != null)
-        {
-            mainButtonsOriginalScale = mainButtons.transform.localScale;
-            mainButtonsCanvasGroup = mainButtons.GetComponent<CanvasGroup>();
-            if (mainButtonsCanvasGroup == null)
+                if (showDebugLogs) Debug.Log($"🎮 Shared MainButtons reference setup for {altarType} altar");
+            }
+            else
             {
-                mainButtonsCanvasGroup = mainButtons.AddComponent<CanvasGroup>();
+                Debug.LogWarning("⚠️ MainButtons GameObject not found! Auto-hide feature will be disabled.");
+                autoHideMainButtons = false;
             }
+        }
 
-            if (showDebugLogs) Debug.Log($"🎮 MainButtons reference setup complete: {mainButtons.name}");
-        }
-        else
-        {
-            Debug.LogWarning("⚠️ MainButtons GameObject not found! Auto-hide feature will be disabled.");
-            autoHideMainButtons = false;
-        }
+        // Use the shared references
+        mainButtons = sharedMainButtons;
     }
 
-    void SetupGachaUIIntegration()
+    void SetupSystemIntegration()
     {
-        if (autoFindGachaUI && gachaUI == null)
+        if (autoFindSystems)
         {
-            gachaUI = FindAnyObjectByType<GachaUI>();
-            if (gachaUI == null)
+            if (altarType == AltarType.Gacha && gachaUI == null)
             {
-                Debug.LogWarning("⚠️ GachaUI not found! Button management may not work correctly.");
+                gachaUI = FindAnyObjectByType<GachaUI>();
+            }
+
+            if (altarType == AltarType.Upgrade && upgradeManager == null)
+            {
+                upgradeManager = FindAnyObjectByType<MonsterUpgradeManager>();
             }
         }
 
-        if (gachaButtonRow != null)
+        // Setup primary action button based on altar type
+        if (buttonRow != null)
         {
-            Transform summonBtnTransform = gachaButtonRow.Find("SummonBtn");
-            if (summonBtnTransform != null)
+            string buttonName = altarType == AltarType.Gacha ? "SummonBtn" : "UpgradeBtn";
+            Transform buttonTransform = buttonRow.Find(buttonName);
+
+            if (buttonTransform != null)
             {
-                summonButton = summonBtnTransform.GetComponent<Button>();
-                if (summonButton != null)
+                primaryActionButton = buttonTransform.GetComponent<Button>();
+                if (primaryActionButton != null)
                 {
-                    summonButton.onClick.AddListener(OnSummonButtonClicked);
-                    if (showDebugLogs) Debug.Log("✅ Summon button listener added");
+                    primaryActionButton.onClick.AddListener(OnPrimaryActionButtonClicked);
+                    if (showDebugLogs) Debug.Log($"✅ {buttonName} button listener added for {altarType} altar");
                 }
             }
+            else
+            {
+                Debug.LogWarning($"⚠️ {buttonName} not found in {buttonRow?.name}!");
+            }
         }
 
-        if (showDebugLogs) Debug.Log($"🎮 GachaUI integration setup - GachaUI: {gachaUI != null}, SummonButton: {summonButton != null}");
+        if (showDebugLogs) Debug.Log($"🎮 {altarType} altar integration setup complete");
     }
 
     void SetupMagicAuraEffect()
@@ -203,11 +213,9 @@ public class AltarInteraction : MonoBehaviour
             if (magicAuraTransform != null)
             {
                 magicAuraEffect = magicAuraTransform.gameObject;
-                if (showDebugLogs) Debug.Log($"✅ Auto-found Magic Aura: {magicAuraEffect.name}");
+                if (showDebugLogs) Debug.Log($"✅ Auto-found Magic Aura for {altarType} altar");
             }
         }
-
-        if (showDebugLogs) Debug.Log($"🎬 Magic Aura Effect setup - Found: {magicAuraEffect != null}");
     }
 
     void SetupAudioSource()
@@ -225,10 +233,20 @@ public class AltarInteraction : MonoBehaviour
         }
     }
 
+    void OnPrimaryActionButtonClicked()
+    {
+        if (altarType == AltarType.Gacha)
+        {
+            OnSummonButtonClicked();
+        }
+        else if (altarType == AltarType.Upgrade)
+        {
+            OnUpgradeButtonClicked();
+        }
+    }
+
     void OnSummonButtonClicked()
     {
-        if (!autoHideGachaButtonsOnSummon) return;
-
         var cutsceneManager = SummonCutsceneManager.Instance;
         if (cutsceneManager != null && cutsceneManager.IsCutscenePlaying)
         {
@@ -239,24 +257,69 @@ public class AltarInteraction : MonoBehaviour
         if (showDebugLogs) Debug.Log("🎮 Summon button clicked - hiding GachaButtonRow and opening GachaUI");
 
         SetInteractionEnabled(false);
-        HideGachaUI();
+        HideButtonRowUI();
 
         if (gachaUI != null)
         {
             gachaUI.OpenGachaUI();
-            gachaUIIsOpen = true;
+            systemUIIsOpen = true;
         }
     }
 
-    public void OnGachaUIClosed()
+    void OnUpgradeButtonClicked()
     {
-        if (gachaUIIsOpen)
+        if (showDebugLogs) Debug.Log("🔮 Upgrade button clicked - hiding UpgradeButtonRow and opening MonsterUpgradePanel");
+
+        SetInteractionEnabled(false);
+        HideButtonRowUI();
+
+        if (upgradeManager != null)
         {
-            if (showDebugLogs) Debug.Log("🎮 GachaUI closed - re-enabling altar interaction and showing MainButtons");
-            gachaUIIsOpen = false;
+            upgradeManager.OpenUpgradePanel();
+            systemUIIsOpen = true;
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ MonsterUpgradeManager not found!");
+            // ✅ RESET STATE if manager not found
             SetInteractionEnabled(true);
             ShowMainButtons();
         }
+    }
+
+    public void OnSystemUIClosed()
+    {
+        if (systemUIIsOpen || isInteractionBlocked)
+        {
+            if (showDebugLogs) Debug.Log($"🎮 {altarType} system UI closed - re-enabling altar interaction");
+            systemUIIsOpen = false;
+            SetInteractionEnabled(true);
+            ShowMainButtons();
+        }
+    }
+
+    // ✅ NEW: Force reset method for debugging
+    [ContextMenu("Force Reset State")]
+    public void ForceResetState()
+    {
+        systemUIIsOpen = false;
+        isInteractionBlocked = false;
+        allowInteraction = true;
+        isUIVisible = false;
+
+        if (buttonRow != null)
+        {
+            buttonRow.gameObject.SetActive(false);
+        }
+
+        if (magicAuraEffect != null)
+        {
+            magicAuraEffect.SetActive(false);
+        }
+
+        ShowMainButtons();
+
+        if (showDebugLogs) Debug.Log($"🔄 {altarType} altar state forcefully reset");
     }
 
     public void SetInteractionEnabled(bool enabled)
@@ -266,7 +329,7 @@ public class AltarInteraction : MonoBehaviour
 
         if (showDebugLogs)
         {
-            Debug.Log($"🔒 Altar interaction {(enabled ? "ENABLED" : "DISABLED")}");
+            Debug.Log($"🔒 {altarType} altar interaction {(enabled ? "ENABLED" : "DISABLED")}");
         }
     }
 
@@ -283,13 +346,13 @@ public class AltarInteraction : MonoBehaviour
 
         if (showDebugLogs)
         {
-            Debug.Log("🔒 Altar interaction is currently blocked (GachaUI is open)");
+            Debug.Log($"🔒 {altarType} altar interaction is currently blocked");
         }
     }
 
     private void Update()
     {
-        if (isUIVisible && gachaButtonRow != null && gachaButtonRow.gameObject.activeSelf && !isInteractionBlocked)
+        if (isUIVisible && buttonRow != null && buttonRow.gameObject.activeSelf && !isInteractionBlocked)
         {
             CheckForCloseClick();
         }
@@ -297,21 +360,12 @@ public class AltarInteraction : MonoBehaviour
 
     void InitializeUI()
     {
-        if (gachaButtonRow != null)
+        if (buttonRow != null)
         {
-            if (layoutIgnoreButton != null)
-            {
-                layoutIgnoreButtonElement = layoutIgnoreButton.GetComponent<LayoutElement>();
-                if (layoutIgnoreButtonElement == null)
-                {
-                    layoutIgnoreButtonElement = layoutIgnoreButton.gameObject.AddComponent<LayoutElement>();
-                }
-            }
+            bool wasActive = buttonRow.gameObject.activeSelf;
+            buttonRow.gameObject.SetActive(true);
 
-            bool wasActive = gachaButtonRow.gameObject.activeSelf;
-            gachaButtonRow.gameObject.SetActive(true);
-
-            horizontalLayoutGroup = gachaButtonRow.GetComponent<HorizontalLayoutGroup>();
+            horizontalLayoutGroup = buttonRow.GetComponent<HorizontalLayoutGroup>();
 
             buttonTransforms.Clear();
             originalLayoutPositions.Clear();
@@ -319,22 +373,17 @@ public class AltarInteraction : MonoBehaviour
 
             if (horizontalLayoutGroup != null)
             {
-                LayoutRebuilder.ForceRebuildLayoutImmediate(gachaButtonRow);
+                LayoutRebuilder.ForceRebuildLayoutImmediate(buttonRow);
                 Canvas.ForceUpdateCanvases();
             }
 
-            for (int i = 0; i < gachaButtonRow.childCount; i++)
+            for (int i = 0; i < buttonRow.childCount; i++)
             {
-                Transform child = gachaButtonRow.GetChild(i);
+                Transform child = buttonRow.GetChild(i);
                 RectTransform buttonRect = child.GetComponent<RectTransform>();
 
                 if (buttonRect != null)
                 {
-                    if (layoutIgnoreButton != null && buttonRect == layoutIgnoreButton)
-                    {
-                        continue;
-                    }
-
                     buttonTransforms.Add(buttonRect);
                     originalLayoutPositions.Add(buttonRect.anchoredPosition);
 
@@ -349,7 +398,7 @@ public class AltarInteraction : MonoBehaviour
                 }
             }
 
-            gachaButtonRow.gameObject.SetActive(wasActive);
+            buttonRow.gameObject.SetActive(wasActive);
         }
     }
 
@@ -359,51 +408,69 @@ public class AltarInteraction : MonoBehaviour
         {
             audioSource.volume = popupVolume;
             audioSource.PlayOneShot(popupSoundClip);
-            if (showDebugLogs) Debug.Log("🔊 Playing popup sound");
+            if (showDebugLogs) Debug.Log($"🔊 Playing {altarType} altar popup sound");
         }
     }
 
     void HideMainButtons()
     {
-        if (!autoHideMainButtons || mainButtons == null || mainButtonsCanvasGroup == null) return;
+        if (!autoHideMainButtons || sharedMainButtons == null || sharedMainButtonsCanvasGroup == null) return;
 
-        if (showDebugLogs) Debug.Log("🔽 Hiding MainButtons");
+        if (showDebugLogs) Debug.Log($"🔽 Hiding MainButtons (requested by {altarType} altar)");
 
         if (animateMainButtons)
         {
-            mainButtonsCanvasGroup.DOFade(0f, mainButtonsAnimationDuration)
+            sharedMainButtonsCanvasGroup.DOFade(0f, mainButtonsAnimationDuration)
                 .SetEase(mainButtonsAnimationEase);
 
-            mainButtons.transform.DOScale(0.8f, mainButtonsAnimationDuration)
+            sharedMainButtons.transform.DOScale(0.8f, mainButtonsAnimationDuration)
                 .SetEase(mainButtonsAnimationEase)
                 .OnComplete(() => {
-                    mainButtons.SetActive(false);
+                    sharedMainButtons.SetActive(false);
                     if (showDebugLogs) Debug.Log("✅ MainButtons hidden");
                 });
         }
         else
         {
-            mainButtons.SetActive(false);
+            sharedMainButtons.SetActive(false);
             if (showDebugLogs) Debug.Log("✅ MainButtons hidden instantly");
         }
     }
 
     void ShowMainButtons()
     {
-        if (!autoHideMainButtons || mainButtons == null || mainButtonsCanvasGroup == null) return;
+        if (!autoHideMainButtons || sharedMainButtons == null || sharedMainButtonsCanvasGroup == null) return;
 
-        if (showDebugLogs) Debug.Log("🔼 Showing MainButtons");
+        // ✅ CHECK: Only show if no other altar has UI open
+        bool anyAltarHasUIOpen = false;
+        var allAltars = FindObjectsByType<AltarInteraction>(FindObjectsSortMode.None);
+        foreach (var altar in allAltars)
+        {
+            if (altar != this && (altar.systemUIIsOpen || altar.isUIVisible))
+            {
+                anyAltarHasUIOpen = true;
+                break;
+            }
+        }
+
+        if (anyAltarHasUIOpen)
+        {
+            if (showDebugLogs) Debug.Log($"🔄 Skipping MainButtons show - another altar has UI open");
+            return;
+        }
+
+        if (showDebugLogs) Debug.Log($"🔼 Showing MainButtons (requested by {altarType} altar)");
 
         if (animateMainButtons)
         {
-            mainButtons.SetActive(true);
-            mainButtonsCanvasGroup.alpha = 0f;
-            mainButtons.transform.localScale = Vector3.one * 0.8f;
+            sharedMainButtons.SetActive(true);
+            sharedMainButtonsCanvasGroup.alpha = 0f;
+            sharedMainButtons.transform.localScale = Vector3.one * 0.8f;
 
-            mainButtonsCanvasGroup.DOFade(1f, mainButtonsAnimationDuration)
+            sharedMainButtonsCanvasGroup.DOFade(1f, mainButtonsAnimationDuration)
                 .SetEase(mainButtonsAnimationEase);
 
-            mainButtons.transform.DOScale(mainButtonsOriginalScale, mainButtonsAnimationDuration)
+            sharedMainButtons.transform.DOScale(sharedMainButtonsOriginalScale, mainButtonsAnimationDuration)
                 .SetEase(mainButtonsAnimationEase)
                 .OnComplete(() => {
                     if (showDebugLogs) Debug.Log("✅ MainButtons shown");
@@ -411,9 +478,9 @@ public class AltarInteraction : MonoBehaviour
         }
         else
         {
-            mainButtons.SetActive(true);
-            mainButtonsCanvasGroup.alpha = 1f;
-            mainButtons.transform.localScale = mainButtonsOriginalScale;
+            sharedMainButtons.SetActive(true);
+            sharedMainButtonsCanvasGroup.alpha = 1f;
+            sharedMainButtons.transform.localScale = sharedMainButtonsOriginalScale;
             if (showDebugLogs) Debug.Log("✅ MainButtons shown instantly");
         }
     }
@@ -423,11 +490,6 @@ public class AltarInteraction : MonoBehaviour
         for (int i = 0; i < buttonLayoutElements.Count; i++)
         {
             buttonLayoutElements[i].ignoreLayout = true;
-        }
-
-        if (layoutIgnoreButtonElement != null)
-        {
-            layoutIgnoreButtonElement.ignoreLayout = true;
         }
     }
 
@@ -452,14 +514,9 @@ public class AltarInteraction : MonoBehaviour
             buttonLayoutElements[i].ignoreLayout = false;
         }
 
-        if (layoutIgnoreButtonElement != null)
-        {
-            layoutIgnoreButtonElement.ignoreLayout = true;
-        }
-
         if (horizontalLayoutGroup != null)
         {
-            LayoutRebuilder.ForceRebuildLayoutImmediate(gachaButtonRow);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(buttonRow);
         }
     }
 
@@ -469,6 +526,19 @@ public class AltarInteraction : MonoBehaviour
         {
             clickAction.action.performed += OnClick;
             clickAction.action.Enable();
+        }
+    }
+
+    void OnDestroy()
+    {
+        activeAltarCount--;
+        if (showDebugLogs) Debug.Log($"🏺 {altarType} Altar destroyed. Remaining altars: {activeAltarCount}");
+
+        // Reset shared references if this was the last altar
+        if (activeAltarCount <= 0)
+        {
+            sharedMainButtons = null;
+            sharedMainButtonsCanvasGroup = null;
         }
     }
 
@@ -485,9 +555,9 @@ public class AltarInteraction : MonoBehaviour
             animationSequence.Kill();
         }
 
-        if (summonButton != null)
+        if (primaryActionButton != null)
         {
-            summonButton.onClick.RemoveListener(OnSummonButtonClicked);
+            primaryActionButton.onClick.RemoveListener(OnPrimaryActionButtonClicked);
         }
 
         if (magicAuraEffect != null)
@@ -495,7 +565,8 @@ public class AltarInteraction : MonoBehaviour
             magicAuraEffect.SetActive(false);
         }
 
-        if (autoHideMainButtons && !isUIVisible && !gachaUIIsOpen)
+        // ✅ IMPROVED: Only show main buttons if no UI is open and no other altar is active
+        if (autoHideMainButtons && !isUIVisible && !systemUIIsOpen)
         {
             ShowMainButtons();
         }
@@ -519,7 +590,7 @@ public class AltarInteraction : MonoBehaviour
             if (hit.collider.gameObject == gameObject)
             {
                 PlayClickEffects();
-                ToggleGachaUI();
+                ToggleButtonRowUI();
             }
         }
     }
@@ -535,8 +606,8 @@ public class AltarInteraction : MonoBehaviour
         {
             if (closeOnUIClick)
             {
-                if (showDebugLogs) Debug.Log("Closing GachaButtonRow: Clicked on UI element");
-                HideGachaUI();
+                if (showDebugLogs) Debug.Log($"Closing {altarType} ButtonRow: Clicked on UI element");
+                HideButtonRowUI();
             }
             return;
         }
@@ -557,8 +628,8 @@ public class AltarInteraction : MonoBehaviour
             }
         }
 
-        if (showDebugLogs) Debug.Log("Closing GachaButtonRow: Clicked outside");
-        HideGachaUI();
+        if (showDebugLogs) Debug.Log($"Closing {altarType} ButtonRow: Clicked outside");
+        HideButtonRowUI();
     }
 
     void OnMouseDown()
@@ -570,26 +641,26 @@ public class AltarInteraction : MonoBehaviour
         }
 
         PlayClickEffects();
-        ToggleGachaUI();
+        ToggleButtonRowUI();
     }
 
-    public void ToggleGachaUI()
+    public void ToggleButtonRowUI()
     {
-        if (gachaButtonRow == null) return;
+        if (buttonRow == null) return;
 
         if (!isUIVisible)
         {
-            ShowGachaUI();
+            ShowButtonRowUI();
         }
         else
         {
-            HideGachaUI();
+            HideButtonRowUI();
         }
     }
 
-    public void ShowGachaUI()
+    public void ShowButtonRowUI()
     {
-        if (gachaButtonRow == null || isUIVisible || buttonTransforms.Count == 0) return;
+        if (buttonRow == null || isUIVisible || buttonTransforms.Count == 0) return;
 
         if (animationSequence != null)
         {
@@ -597,20 +668,20 @@ public class AltarInteraction : MonoBehaviour
         }
 
         HideMainButtons();
-        StartCoroutine(ShowGachaUICoroutine());
+        StartCoroutine(ShowButtonRowUICoroutine());
     }
 
-    IEnumerator ShowGachaUICoroutine()
+    IEnumerator ShowButtonRowUICoroutine()
     {
         DisableLayoutControlForAnimatedButtons();
 
-        gachaButtonRow.gameObject.SetActive(true);
+        buttonRow.gameObject.SetActive(true);
 
-        // 🎬 Activate Magic Aura at the same time as GachaButtonRow
+        // Activate Magic Aura
         if (magicAuraEffect != null)
         {
             magicAuraEffect.SetActive(true);
-            if (showDebugLogs) Debug.Log("🎬 Magic Aura activated with GachaButtonRow");
+            if (showDebugLogs) Debug.Log($"🎬 Magic Aura activated for {altarType} altar");
         }
 
         SetButtonsToHiddenPositions();
@@ -632,9 +703,6 @@ public class AltarInteraction : MonoBehaviour
                 animationSequence.Append(
                     buttonTransforms[buttonIndex].DOAnchorPos(originalLayoutPositions[buttonIndex], slideInDuration)
                         .SetEase(slideInEase)
-                        .OnComplete(() => {
-                            if (showDebugLogs) Debug.Log($"Button {buttonIndex} reached target: {originalLayoutPositions[buttonIndex]}");
-                        })
                 );
             }
         }
@@ -652,9 +720,6 @@ public class AltarInteraction : MonoBehaviour
                 animationSequence.Append(
                     buttonTransforms[buttonIndex].DOAnchorPos(originalLayoutPositions[buttonIndex], slideInDuration)
                         .SetEase(slideInEase)
-                        .OnComplete(() => {
-                            if (showDebugLogs) Debug.Log($"Button {buttonIndex} reached target: {originalLayoutPositions[buttonIndex]}");
-                        })
                 );
             }
         }
@@ -670,9 +735,9 @@ public class AltarInteraction : MonoBehaviour
         });
     }
 
-    public void HideGachaUI()
+    public void HideButtonRowUI()
     {
-        if (gachaButtonRow == null || !isUIVisible || buttonTransforms.Count == 0) return;
+        if (buttonRow == null || !isUIVisible || buttonTransforms.Count == 0) return;
 
         if (animationSequence != null)
         {
@@ -707,42 +772,59 @@ public class AltarInteraction : MonoBehaviour
         }
 
         animationSequence.OnComplete(() => {
-            gachaButtonRow.gameObject.SetActive(false);
+            buttonRow.gameObject.SetActive(false);
 
-            // 🎬 Deactivate Magic Aura at the same time as GachaButtonRow
+            // Deactivate Magic Aura
             if (magicAuraEffect != null)
             {
                 magicAuraEffect.SetActive(false);
-                if (showDebugLogs) Debug.Log("🎬 Magic Aura deactivated with GachaButtonRow");
+                if (showDebugLogs) Debug.Log($"🎬 Magic Aura deactivated for {altarType} altar");
             }
 
             RestoreLayoutControl();
             isUIVisible = false;
 
-            if (!gachaUIIsOpen)
+            // ✅ IMPROVED: Always try to show main buttons when hiding UI
+            if (!systemUIIsOpen)
             {
                 ShowMainButtons();
             }
         });
     }
 
-    // Essential Context Menu Methods Only
+    // Legacy compatibility methods
+    /// <summary>
+    /// Legacy method for Gacha UI compatibility
+    /// </summary>
+    public void OnGachaUIClosed()
+    {
+        OnSystemUIClosed();
+    }
+
+    /// <summary>
+    /// Legacy method for Upgrade UI compatibility  
+    /// </summary>
+    public void OnUpgradePanelClosed()
+    {
+        OnSystemUIClosed();
+    }
+
+    // Context Menu Methods
     [ContextMenu("Show UI Instantly")]
     public void ShowUIInstantly()
     {
-        if (gachaButtonRow == null) return;
+        if (buttonRow == null) return;
 
-        if (autoHideMainButtons && mainButtons != null)
+        if (autoHideMainButtons && sharedMainButtons != null)
         {
-            mainButtons.SetActive(false);
+            sharedMainButtons.SetActive(false);
         }
 
-        gachaButtonRow.gameObject.SetActive(true);
+        buttonRow.gameObject.SetActive(true);
 
         if (magicAuraEffect != null)
         {
             magicAuraEffect.SetActive(true);
-            if (showDebugLogs) Debug.Log("🎬 Magic Aura activated instantly with GachaButtonRow");
         }
 
         RestoreLayoutControl();
@@ -752,27 +834,26 @@ public class AltarInteraction : MonoBehaviour
     [ContextMenu("Hide UI Instantly")]
     public void HideUIInstantly()
     {
-        if (gachaButtonRow == null) return;
+        if (buttonRow == null) return;
 
-        gachaButtonRow.gameObject.SetActive(false);
+        buttonRow.gameObject.SetActive(false);
 
         if (magicAuraEffect != null)
         {
             magicAuraEffect.SetActive(false);
-            if (showDebugLogs) Debug.Log("🎬 Magic Aura deactivated instantly with GachaButtonRow");
         }
 
         RestoreLayoutControl();
         isUIVisible = false;
 
-        if (autoHideMainButtons && mainButtons != null && !gachaUIIsOpen)
+        if (autoHideMainButtons && sharedMainButtons != null && !systemUIIsOpen)
         {
-            mainButtons.SetActive(true);
-            if (mainButtonsCanvasGroup != null)
+            sharedMainButtons.SetActive(true);
+            if (sharedMainButtonsCanvasGroup != null)
             {
-                mainButtonsCanvasGroup.alpha = 1f;
+                sharedMainButtonsCanvasGroup.alpha = 1f;
             }
-            mainButtons.transform.localScale = mainButtonsOriginalScale;
+            sharedMainButtons.transform.localScale = sharedMainButtonsOriginalScale;
         }
     }
 }
