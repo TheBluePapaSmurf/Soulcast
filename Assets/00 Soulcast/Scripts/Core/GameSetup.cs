@@ -150,80 +150,43 @@ public class GameSetup : MonoBehaviour
         }
     }
 
-    // ✅ REPLACE: Setup enemies from combat template (WAVE-AWARE VERSION)
+    // ✅ NEW: Setup enemies from combat template
     private void SetupEnemiesFromTemplate(CombatTemplate combatTemplate)
     {
         Debug.Log($"Setting up enemies from template: {combatTemplate.waves.Count} waves...");
 
-        // ALLEEN de eerste wave spawnen - andere waves komen later via CombatManager
-        if (combatTemplate.waves.Count > 0)
-        {
-            SetupFirstWaveOnly(combatTemplate.waves[0]);
-        }
-        else
-        {
-            Debug.LogWarning("No waves found in combat template!");
-        }
-    }
+        int enemyIndex = 0;
 
-    private void SetupFirstWaveOnly(WaveConfiguration firstWave)
-    {
-        Debug.Log($"Spawning first wave: {firstWave.waveName}");
-
-        int spawnPointIndex = 0;
-
-        foreach (var enemySpawn in firstWave.enemySpawns)
+        foreach (var wave in combatTemplate.waves)
         {
-            for (int copy = 0; copy < enemySpawn.spawnCount; copy++)
+            foreach (var enemySpawn in wave.enemySpawns)
             {
-                // Use specific spawn point by index instead of checking availability
-                if (spawnPointIndex >= enemySpawnPoints.Length)
+                if (enemyIndex >= enemySpawnPoints.Length)
                 {
-                    Debug.LogWarning($"Not enough spawn points! Need {spawnPointIndex + 1}, have {enemySpawnPoints.Length}");
-                    // Cycle back to start if we run out of spawn points
-                    spawnPointIndex = spawnPointIndex % enemySpawnPoints.Length;
+                    Debug.LogWarning("Not enough enemy spawn points for all enemies!");
+                    break;
                 }
 
-                var spawnPoint = enemySpawnPoints[spawnPointIndex];
-                var monsterData = CreateRuntimeEnemyData(enemySpawn);
+                // Create multiple copies if spawnCount > 1
+                for (int copy = 0; copy < enemySpawn.spawnCount; copy++)
+                {
+                    if (enemyIndex >= enemySpawnPoints.Length) break;
 
-                // Spawn the enemy with wave info
-                SpawnMonsterWithWaveData(monsterData, spawnPoint, false, $"(Wave 1 Enemy {spawnPointIndex + 1})", 0);
+                    var spawnPoint = enemySpawnPoints[enemyIndex];
 
-                Debug.Log($"✅ Spawned first wave enemy {spawnPointIndex + 1} on {spawnPoint.name}: {enemySpawn.monsterData.monsterName}");
+                    // Create MonsterData from EnemySpawn
+                    var monsterData = CreateRuntimeEnemyData(enemySpawn);
 
-                // Move to next spawn point
-                spawnPointIndex++;
+                    // Spawn the enemy
+                    SpawnMonster(monsterData, spawnPoint, false, $"(Enemy {enemyIndex + 1})");
+
+                    Debug.Log($"✅ Spawned enemy {enemyIndex + 1}: {enemySpawn.monsterData.monsterName} (Lv.{enemySpawn.monsterLevel})");
+
+                    enemyIndex++;
+                }
             }
         }
     }
-
-
-    private void SpawnMonsterWithWaveData(MonsterData monsterData, Transform spawnPoint, bool isPlayerControlled, string suffix, int waveIndex)
-    {
-        // Normale spawn logic
-        GameObject monster = Instantiate(monsterPrefab, spawnPoint.position, spawnPoint.rotation);
-        Monster monsterComponent = monster.GetComponent<Monster>();
-        monsterComponent.monsterData = monsterData;
-        monsterComponent.isPlayerControlled = isPlayerControlled;
-
-        // Voeg wave index toe voor tracking
-        monsterComponent.waveIndex = waveIndex;
-
-        // Spawn 3D model
-        if (spawnModels && monsterData.modelPrefab != null)
-        {
-            GameObject model3D = SpawnModel(monsterData.modelPrefab, monster.transform);
-        }
-        else if (spawnModels)
-        {
-            CreateFallbackVisual(monster.transform, monsterData);
-        }
-
-        monsterComponent.InitializeMonster();
-        monster.name = monsterData.monsterName + " " + suffix;
-    }
-
 
     // ✅ NEW: Create runtime MonsterData from CollectedMonster
     private MonsterData CreateRuntimeMonsterData(CollectedMonster collectedMonster)

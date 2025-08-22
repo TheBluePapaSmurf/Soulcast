@@ -35,11 +35,6 @@ public class MonsterInventoryUI : MonoBehaviour
     public TextMeshProUGUI duplicateInfoText;
     public StarDisplay statsStarDisplay;
 
-    [Header("Experience Bar")]
-    public Slider experienceSlider;                    // Reference to the EXP Bar slider
-    public TextMeshProUGUI experienceText;             // Optional text to show current/required XP
-    public bool showExperienceNumbers = true;          // Show exact numbers
-
     [Header("Rune Panel")]
     public RunePanelUI runePanelUI;
     public Button runeTabButton;
@@ -506,8 +501,7 @@ public class MonsterInventoryUI : MonoBehaviour
             statsStarDisplay.SetStarLevel(monster.currentStarLevel);
         }
 
-        // ✅ NEW: Update Experience Bar
-        UpdateExperienceBar(monster);
+
 
         // Calculate stats
         MonsterStats totalStats = monster.CalculateCurrentStats();
@@ -543,7 +537,7 @@ public class MonsterInventoryUI : MonoBehaviour
         if (speedStatText != null)
         {
             speedStatText.text = speedBonus > 0 ?
-                $"SPD: {baseStats.speed} <color=#00FF00>+{speedBonus}</color>" :
+                $"SPD: {baseStats.speed} <color=#00FF00>+{defenseBonus}</color>" :
                 $"SPD: {baseStats.speed}";
         }
 
@@ -554,7 +548,7 @@ public class MonsterInventoryUI : MonoBehaviour
 
         if (critDamageText != null)
         {
-            critDamageText.text = $"CRIT DMG: {totalStats.criticalDamage}%";
+            critDamageText.text = $"Resistance: {totalStats.criticalDamage}%";
         }
 
         if (resistanceStatText != null)
@@ -567,98 +561,12 @@ public class MonsterInventoryUI : MonoBehaviour
             accuracyStatText.text = $"Accuracy: {totalStats.accuracy}%";
         }
 
+
         if (duplicateInfoText != null && monsterCollectionManager != null)
         {
             int totalOfThisType = monsterCollectionManager.GetMonsterCount(monster.monsterData);
             duplicateInfoText.text = $"Owned: {totalOfThisType}";
             duplicateInfoText.gameObject.SetActive(true);
-        }
-    }
-
-    /// <summary>
-    /// Update the experience bar based on monster's current XP
-    /// </summary>
-    void UpdateExperienceBar(CollectedMonster monster)
-    {
-        if (monster == null || experienceSlider == null) return;
-
-        // Get experience data
-        int currentXP = monster.currentExperience;
-        int requiredXP = monster.GetExperienceRequiredForNextLevel();
-        float xpProgress = monster.GetExperienceProgress();
-        int currentLevel = monster.currentLevel;
-        int maxLevel = monster.GetMaxLevel();
-
-        // Update slider
-        experienceSlider.value = xpProgress;
-
-        // Check if monster is at max level
-        bool isMaxLevel = currentLevel >= maxLevel;
-
-        if (isMaxLevel)
-        {
-            // Max level - show full bar
-            experienceSlider.value = 1.0f;
-
-            if (experienceText != null)
-            {
-                experienceText.text = showExperienceNumbers ?
-                    $"MAX LEVEL" :
-                    $"MAX";
-            }
-
-            // Optional: Change bar color for max level
-            SetExperienceBarColor(Color.gold);
-        }
-        else
-        {
-            // Normal level progression
-            if (experienceText != null && showExperienceNumbers)
-            {
-                experienceText.text = $"{currentXP:N0} / {requiredXP:N0} XP";
-            }
-            else if (experienceText != null)
-            {
-                int percentProgress = Mathf.RoundToInt(xpProgress * 100);
-                experienceText.text = $"{percentProgress}%";
-            }
-
-            // Normal progression color
-            SetExperienceBarColor(GetExperienceBarColor(xpProgress));
-        }
-
-        if (showDebugLogs)
-        {
-            Debug.Log($"💫 XP Bar Updated: {monster.monsterData.monsterName} | Level {currentLevel} | XP: {currentXP}/{requiredXP} ({xpProgress:P1})");
-        }
-    }
-
-    /// <summary>
-    /// Get color based on XP progress for visual feedback
-    /// </summary>
-    Color GetExperienceBarColor(float progress)
-    {
-        // Color transitions from blue (empty) to green (full)
-        if (progress < 0.3f)
-            return Color.Lerp(Color.blue, Color.cyan, progress / 0.3f);
-        else if (progress < 0.7f)
-            return Color.Lerp(Color.cyan, Color.yellow, (progress - 0.3f) / 0.4f);
-        else
-            return Color.Lerp(Color.yellow, Color.green, (progress - 0.7f) / 0.3f);
-    }
-
-    /// <summary>
-    /// Set the experience bar fill color
-    /// </summary>
-    void SetExperienceBarColor(Color color)
-    {
-        if (experienceSlider?.fillRect != null)
-        {
-            Image fillImage = experienceSlider.fillRect.GetComponent<Image>();
-            if (fillImage != null)
-            {
-                fillImage.color = color;
-            }
         }
     }
 
@@ -708,10 +616,6 @@ public class MonsterInventoryUI : MonoBehaviour
             currentSelectedMonster.RefreshStats();
 
             UpdateStatsDisplay(currentSelectedMonster);
-
-            // ✅ NEW: Explicitly update XP bar
-            UpdateExperienceBar(currentSelectedMonster);
-
             if (showDebugLogs) Debug.Log($"Refreshed stats display for: {currentSelectedMonster.monsterData.monsterName}");
         }
     }

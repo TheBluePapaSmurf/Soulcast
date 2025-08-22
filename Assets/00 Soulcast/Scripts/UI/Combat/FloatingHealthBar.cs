@@ -1,8 +1,6 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.Collections.Generic;
-using System.Linq;
 
 public class FloatingHealthBar : MonoBehaviour
 {
@@ -11,16 +9,6 @@ public class FloatingHealthBar : MonoBehaviour
     public TextMeshProUGUI healthText;
     public Image fillImage;
     public Image backgroundImage;
-
-    [Header("Level Display")]
-    public TextMeshProUGUI levelText;              // Text component for level
-    public Image levelBackgroundImage;             // Background image for level text
-
-    [Header("Buff/Debuff Icons")]
-    public Transform buffDebuffContainer;           // Container for buff/debuff icons
-    public GameObject buffDebuffIconPrefab;         // Prefab for individual icons
-    public int maxVisibleIcons = 6;                // Maximum icons to show
-    public float iconSpacing = 30f;                // Spacing between icons
 
     [Header("Settings")]
     public bool faceCamera = true;
@@ -46,10 +34,6 @@ public class FloatingHealthBar : MonoBehaviour
     private Vector3 velocity;
     private float lastScale = -1f; // Track scale changes
 
-    // Buff/Debuff tracking
-    private Dictionary<BuffDebuffEffect, GameObject> activeIcons = new Dictionary<BuffDebuffEffect, GameObject>();
-    private List<ActiveBuffDebuffEffect> lastKnownEffects = new List<ActiveBuffDebuffEffect>();
-
     [System.Obsolete]
     void Start()
     {
@@ -74,7 +58,6 @@ public class FloatingHealthBar : MonoBehaviour
         {
             transform.position = targetMonster.transform.position + offset;
             UpdateHealthBar();
-            UpdateBuffDebuffIcons();
         }
 
         Debug.Log($"FloatingHealthBar initialized for {targetMonster?.monsterData?.monsterName ?? "Unknown"}");
@@ -109,9 +92,6 @@ public class FloatingHealthBar : MonoBehaviour
 
         // Update health values
         UpdateHealthBar();
-
-        // Update buff/debuff icons
-        UpdateBuffDebuffIcons();
     }
 
     void LateUpdate()
@@ -169,9 +149,6 @@ public class FloatingHealthBar : MonoBehaviour
             healthText.text = $"{currentHP}/{maxHP}";
         }
 
-        // ✅ NEW: Update level display
-        UpdateLevelDisplay();
-
         // Update colors based on health percentage
         UpdateHealthBarColor(healthPercent);
 
@@ -181,213 +158,6 @@ public class FloatingHealthBar : MonoBehaviour
             gameObject.SetActive(false);
         }
     }
-
-    private void UpdateLevelDisplay()
-    {
-        if (targetMonster == null || targetMonster.monsterData == null) return;
-
-        // Get monster level
-        int monsterLevel = GetMonsterLevel();
-
-        // Update level text (always white)
-        if (levelText != null)
-        {
-            levelText.text = $"{monsterLevel}";
-            levelText.color = Color.white;
-        }
-
-        // Update level background with custom element color
-        if (levelBackgroundImage != null)
-        {
-            Color elementColor = GetCustomElementColor(targetMonster.monsterData.element);
-            levelBackgroundImage.color = elementColor;
-        }
-
-        Debug.Log($"Updated level display: Lv.{monsterLevel} with {targetMonster.monsterData.element} color");
-    }
-
-    private Color GetCustomElementColor(ElementType element)
-    {
-        return element switch
-        {
-            ElementType.Fire => Color.red,                                    // 🔥 Rood
-            ElementType.Water => Color.blue,                                  // 💧 Blauw  
-            ElementType.Earth => new Color(0.8f, 0.6f, 0.2f, 0.9f),         // 🌍 Bruin/geel
-            ElementType.Dark => new Color(0.3f, 0.1f, 0.4f, 0.9f),          // 🌑 Donker paars
-            ElementType.Light => new Color(0.8f, 0.8f, 0.8f, 0.9f),         // ✨ Licht grijs
-            _ => Color.white
-        };
-    }
-
-
-    // ✅ NEW: Get Monster Level from Different Sources
-    private int GetMonsterLevel()
-    {
-        // Try to get level from CollectedMonster (for player monsters)
-        if (targetMonster.isPlayerControlled && BattleDataManager.Instance != null)
-        {
-            var selectedTeam = BattleDataManager.Instance.GetSelectedTeam();
-            var collectedMonster = selectedTeam.FirstOrDefault(m =>
-                m.monsterData.monsterName == targetMonster.monsterData.monsterName);
-
-            if (collectedMonster != null)
-            {
-                return collectedMonster.currentLevel;
-            }
-        }
-
-        // For enemy monsters, try to extract level from name
-        string monsterName = targetMonster.monsterData.monsterName;
-        if (monsterName.Contains("Lv."))
-        {
-            // Extract level from name like "Fire Monster Lv.5 (Rare)"
-            int lvIndex = monsterName.IndexOf("Lv.") + 3;
-            int spaceIndex = monsterName.IndexOf(" ", lvIndex);
-            if (spaceIndex == -1) spaceIndex = monsterName.IndexOf("(", lvIndex);
-            if (spaceIndex == -1) spaceIndex = monsterName.Length;
-
-            string levelStr = monsterName.Substring(lvIndex, spaceIndex - lvIndex).Trim();
-            if (int.TryParse(levelStr, out int extractedLevel))
-            {
-                return extractedLevel;
-            }
-        }
-
-        // Fallback to default level
-        return targetMonster.monsterData.defaultLevel;
-    }
-
-
-    // ===== NEW: BUFF/DEBUFF ICON SYSTEM =====
-
-    public void UpdateBuffDebuffIcons()
-    {
-        if (targetMonster == null || buffDebuffContainer == null) return;
-
-        var currentEffects = targetMonster.activeBuffDebuffEffects;
-
-        // Check if effects have changed
-        if (EffectsChanged(currentEffects))
-        {
-            RefreshBuffDebuffIcons(currentEffects);
-            lastKnownEffects = new List<ActiveBuffDebuffEffect>(currentEffects);
-        }
-        else
-        {
-            // Just update the turn counters
-            UpdateIconTurnCounters(currentEffects);
-        }
-    }
-
-    private bool EffectsChanged(List<ActiveBuffDebuffEffect> currentEffects)
-    {
-        if (currentEffects.Count != lastKnownEffects.Count)
-            return true;
-
-        // Check if any effects are different
-        foreach (var current in currentEffects)
-        {
-            bool found = lastKnownEffects.Any(last =>
-                last.effect == current.effect);
-            if (!found)
-                return true;
-        }
-
-        return false;
-    }
-
-    private void RefreshBuffDebuffIcons(List<ActiveBuffDebuffEffect> effects)
-    {
-        // Clear existing icons
-        ClearAllIcons();
-
-        // Create new icons (limit to maxVisibleIcons)
-        int iconsToShow = Mathf.Min(effects.Count, maxVisibleIcons);
-
-        for (int i = 0; i < iconsToShow; i++)
-        {
-            var activeEffect = effects[i];
-            CreateBuffDebuffIcon(activeEffect, i);
-        }
-
-        // If there are more effects than we can show, create an overflow indicator
-        if (effects.Count > maxVisibleIcons)
-        {
-            CreateOverflowIndicator(effects.Count - maxVisibleIcons);
-        }
-    }
-
-    private void CreateBuffDebuffIcon(ActiveBuffDebuffEffect activeEffect, int index)
-    {
-        if (buffDebuffIconPrefab == null) return;
-
-        GameObject iconGO = Instantiate(buffDebuffIconPrefab, buffDebuffContainer);
-        BuffDebuffIconUI iconUI = iconGO.GetComponent<BuffDebuffIconUI>();
-
-        if (iconUI != null)
-        {
-            iconUI.Setup(activeEffect);
-        }
-
-        // Position the icon
-        RectTransform iconRect = iconGO.GetComponent<RectTransform>();
-        if (iconRect != null)
-        {
-            float xPosition = index * iconSpacing;
-            iconRect.anchoredPosition = new Vector2(xPosition, 0);
-        }
-
-        // Track the icon
-        activeIcons[activeEffect.effect] = iconGO;
-    }
-
-    private void CreateOverflowIndicator(int hiddenCount)
-    {
-        if (buffDebuffIconPrefab == null) return;
-
-        GameObject iconGO = Instantiate(buffDebuffIconPrefab, buffDebuffContainer);
-        BuffDebuffIconUI iconUI = iconGO.GetComponent<BuffDebuffIconUI>();
-
-        if (iconUI != null)
-        {
-            iconUI.SetupAsOverflow(hiddenCount);
-        }
-
-        // Position at the end
-        RectTransform iconRect = iconGO.GetComponent<RectTransform>();
-        if (iconRect != null)
-        {
-            float xPosition = (maxVisibleIcons - 1) * iconSpacing;
-            iconRect.anchoredPosition = new Vector2(xPosition, 0);
-        }
-    }
-
-    private void UpdateIconTurnCounters(List<ActiveBuffDebuffEffect> effects)
-    {
-        foreach (var effect in effects)
-        {
-            if (activeIcons.TryGetValue(effect.effect, out GameObject iconGO))
-            {
-                BuffDebuffIconUI iconUI = iconGO.GetComponent<BuffDebuffIconUI>();
-                if (iconUI != null)
-                {
-                    iconUI.UpdateTurnCounter(effect.remainingTurns);
-                }
-            }
-        }
-    }
-
-    private void ClearAllIcons()
-    {
-        foreach (var icon in activeIcons.Values)
-        {
-            if (icon != null)
-                Destroy(icon);
-        }
-        activeIcons.Clear();
-    }
-
-    // ===== EXISTING METHODS =====
 
     private void UpdateHealthBarColor(float healthPercent)
     {
@@ -432,21 +202,13 @@ public class FloatingHealthBar : MonoBehaviour
     public void SetTarget(Monster monster)
     {
         targetMonster = monster;
-        UpdateHealthBar(); // This now includes level display
-        UpdateBuffDebuffIcons();
+        UpdateHealthBar();
     }
 
     // Method to manually trigger health bar update
     public void OnHealthChanged()
     {
-        UpdateHealthBar(); // This now includes level display
-    }
-
-
-    // ✅ NEW: Method to trigger buff/debuff icon update
-    public void OnBuffDebuffChanged()
-    {
-        UpdateBuffDebuffIcons();
+        UpdateHealthBar();
     }
 
     // Method to change scale at runtime
@@ -454,12 +216,6 @@ public class FloatingHealthBar : MonoBehaviour
     {
         healthBarScale = Mathf.Clamp(newScale, 0.01f, 2f);
         ApplyScale();
-    }
-
-    // Cleanup
-    private void OnDestroy()
-    {
-        ClearAllIcons();
     }
 
     // Editor helper methods

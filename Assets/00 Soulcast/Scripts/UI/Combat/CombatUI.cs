@@ -244,37 +244,18 @@ public class CombatUI : MonoBehaviour
                 }
             }
 
-            // ✅ NEW: Add buff/debuff effect descriptions
+            // Add status effect descriptions
             string effects = "";
-            foreach (var buffDebuff in action.buffDebuffEffects)
+            foreach (var statusEffect in action.statusEffects)
             {
-                if (buffDebuff != null)
-                {
-                    effects += $"\n• {buffDebuff.effectName}";
-
-                    // Add duration info
-                    if (buffDebuff.isPermanent)
-                    {
-                        effects += " (Permanent)";
-                    }
-                    else
-                    {
-                        effects += $" ({buffDebuff.duration} turns)";
-                    }
-
-                    // Add effect details
-                    string effectDetails = buffDebuff.GetDisplayText();
-                    if (!string.IsNullOrEmpty(effectDetails))
-                    {
-                        effects += $": {effectDetails}";
-                    }
-                }
+                effects += $"\n• {statusEffect.effectName} ({statusEffect.duration} turns)";
             }
 
-            // Add target info
-            if (action.applySelfEffects)
+            // Add stat modifier descriptions
+            foreach (var statMod in action.statModifiers)
             {
-                effects += "\n• Applied to self";
+                string modText = statMod.modifierAmount > 0 ? "+" : "";
+                effects += $"\n• {modText}{statMod.modifierAmount} {statMod.statType}";
             }
 
             if (!string.IsNullOrEmpty(effects))
@@ -285,7 +266,6 @@ public class CombatUI : MonoBehaviour
             tooltipPanel.SetActive(true);
         }
     }
-
 
     public void HideTooltip()
     {

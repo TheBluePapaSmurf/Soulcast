@@ -2,11 +2,8 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!78 &1
 TagManager:
-  serializedVersion: 3
-  tags:
-  - Missile
-  - Bullet
-  - FxTemporaire
+  serializedVersion: 2
+  tags: []
   layers:
   - Default
   - TransparentFX
@@ -39,16 +36,10 @@ TagManager:
   - 
   - 
   - 
-  - PolySpatial
+  - 
   m_SortingLayers:
   - name: Default
     uniqueID: 0
-    locked: 0
-  - name: PolySpatialUI
-    uniqueID: 3149624925
-    locked: 0
-  - name: UISortingLayer
-    uniqueID: 3342929525
     locked: 0
   m_RenderingLayers:
   - Default
@@ -59,3 +50,27 @@ TagManager:
   - Light Layer 5
   - Light Layer 6
   - Light Layer 7
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 

@@ -22,13 +22,6 @@ public class CombatManager : MonoBehaviour
     private Queue<string> combatLog = new Queue<string>();
     private const int maxLogEntries = 5;
 
-    [Header("Wave Management")]
-    public int currentWaveIndex = 0;
-    public bool isWaveBasedCombat = false;
-    public bool isWaveInProgress = false;
-    private CombatTemplate currentCombatTemplate;
-    private List<Monster> currentWaveEnemies = new List<Monster>();
-
     // Turn management
     private bool isPlayerTurnPhase = true;
     private List<Monster> currentTurnOrder = new List<Monster>();
@@ -85,91 +78,18 @@ public class CombatManager : MonoBehaviour
         InitializeCombat();
     }
 
+    [System.Obsolete]
     public void InitializeCombat()
     {
         Debug.Log("CombatManager: InitializeCombat called");
 
-        // Check if we should use wave-based combat
-        if (BattleDataManager.Instance != null && BattleDataManager.Instance.HasValidBattleData())
-        {
-            var battleData = BattleDataManager.Instance.GetCurrentBattleData();
-            if (battleData.combatTemplate != null && battleData.combatTemplate.waves.Count > 1)
-            {
-                Debug.Log("Using wave-based combat system");
-                InitializeWaveCombat(battleData.combatTemplate);
-                return;
-            }
-        }
-
-        // Fallback to original combat system
-        Debug.Log("Using traditional combat system (single wave)");
-        InitializeTraditionalCombat();
-    }
-
-    private void InitializeWaveCombat(CombatTemplate combatTemplate)
-    {
-        currentCombatTemplate = combatTemplate;
-        currentWaveIndex = 0;
-        isWaveBasedCombat = true;
-        isWaveInProgress = true;
-
-        Debug.Log($"Initializing wave combat: {combatTemplate.combatName} with {combatTemplate.TotalWaves} waves");
-
-        // Initialize player monsters (same as before)
-        InitializePlayerTeam();
-
-        // Initialize first wave enemies (already spawned by GameSetup)
-        InitializeFirstWaveEnemies();
-
-        // Start combat with first wave
-        if (playerMonsters.Count > 0 && enemyMonsters.Count > 0)
-        {
-            StartCombat();
-        }
-    }
-
-    private void InitializePlayerTeam()
-    {
-        playerMonsters.Clear();
-
-        Monster[] allMonsters = FindObjectsByType<Monster>(FindObjectsSortMode.None);
-        foreach (Monster monster in allMonsters)
-        {
-            if (monster.isPlayerControlled)
-            {
-                playerMonsters.Add(monster);
-                ApplyPlayerDifficultyModifiers(monster);
-                Debug.Log($"Added player monster: {monster.monsterData.monsterName}");
-            }
-        }
-    }
-
-    private void InitializeFirstWaveEnemies()
-    {
-        enemyMonsters.Clear();
-        currentWaveEnemies.Clear();
-
-        Monster[] allMonsters = FindObjectsByType<Monster>(FindObjectsSortMode.None);
-        foreach (Monster monster in allMonsters)
-        {
-            if (!monster.isPlayerControlled && monster.waveIndex == 0)
-            {
-                enemyMonsters.Add(monster);
-                currentWaveEnemies.Add(monster);
-                ApplyEnemyDifficultyModifiers(monster);
-                Debug.Log($"Added first wave enemy: {monster.monsterData.monsterName}");
-            }
-        }
-    }
-
-    private void InitializeTraditionalCombat()
-    {
-        // Je bestaande InitializeCombat logic voor non-wave combat
-        isWaveBasedCombat = false;
+        // Clear any existing references
         playerMonsters.Clear();
         enemyMonsters.Clear();
 
-        Monster[] allMonsters = FindObjectsByType<Monster>(FindObjectsSortMode.None);
+        // Find all monsters in the scene
+        Monster[] allMonsters = FindObjectsOfType<Monster>();
+        Debug.Log($"Found {allMonsters.Length} monsters in scene");
 
         foreach (Monster monster in allMonsters)
         {
@@ -177,20 +97,28 @@ public class CombatManager : MonoBehaviour
             {
                 playerMonsters.Add(monster);
                 ApplyPlayerDifficultyModifiers(monster);
+                Debug.Log($"Added player monster: {monster.monsterData.monsterName} ({monster.monsterData.element})");
             }
             else
             {
                 enemyMonsters.Add(monster);
                 ApplyEnemyDifficultyModifiers(monster);
+                Debug.Log($"Added enemy monster: {monster.monsterData.monsterName} ({monster.monsterData.element})");
             }
         }
 
+        Debug.Log($"Final count - Players: {playerMonsters.Count}, Enemies: {enemyMonsters.Count}");
+
+        // Only start combat if we have monsters on both sides
         if (playerMonsters.Count > 0 && enemyMonsters.Count > 0)
         {
             StartCombat();
         }
+        else
+        {
+            Debug.LogError($"Cannot start combat! Players: {playerMonsters.Count}, Enemies: {enemyMonsters.Count}");
+        }
     }
-
 
     // NEW: Add this method to CombatManager.cs
     public void OnTurnCompleted()
@@ -673,259 +601,15 @@ public class CombatManager : MonoBehaviour
 
         if (!enemiesAlive)
         {
-            if (isWaveBasedCombat && isWaveInProgress)
-            {
-                return HandleWaveCompletion();
-            }
-            else
-            {
-                // Traditional single-wave victory
-                Debug.Log("Victory! All enemies defeated.");
-                AddCombatLogEntry("VICTORY! All enemies defeated.");
-                HandleVictory();
-                EndCombat(true);
-                return true;
-            }
+            Debug.Log("Victory! All enemy monsters defeated.");
+            AddCombatLogEntry("VICTORY! All enemies defeated.");
+            HandleVictory();
+            EndCombat(true);
+            return true;
         }
 
         return false;
     }
-
-    private bool HandleWaveCompletion()
-    {
-        Debug.Log($"Wave {currentWaveIndex + 1} completed!");
-        AddCombatLogEntry($"Wave {currentWaveIndex + 1} cleared!");
-
-        // Check if there are more waves
-        currentWaveIndex++;
-
-        if (currentWaveIndex < currentCombatTemplate.waves.Count)
-        {
-            // More waves to come
-            isWaveInProgress = false;
-            combatActive = false; // Pause combat between waves
-
-            Debug.Log($"Preparing next wave... ({currentWaveIndex + 1}/{currentCombatTemplate.waves.Count})");
-            AddCombatLogEntry($"Next wave incoming...");
-
-            // Start next wave after delay
-            StartCoroutine(DelayedNextWave());
-
-            return true; // End current combat phase
-        }
-        else
-        {
-            // All waves completed - victory!
-            Debug.Log("Victory! All waves defeated.");
-            AddCombatLogEntry("VICTORY! All waves defeated.");
-            HandleAllWavesCompleted();
-            EndCombat(true);
-            return true;
-        }
-    }
-
-    private IEnumerator DelayedNextWave()
-    {
-        // Show wave transition message
-        AddCombatLogEntry("Preparing for next wave...");
-
-        // Wait between waves (use template delay if available)
-        WaveConfiguration nextWave = currentCombatTemplate.waves[currentWaveIndex];
-        float delayTime = nextWave.waveDelay > 0 ? nextWave.waveDelay : 3f;
-
-        yield return new WaitForSeconds(delayTime);
-
-        // Spawn next wave
-        yield return StartCoroutine(SpawnNextWave());
-
-        // Resume combat
-        isWaveInProgress = true;
-        combatActive = true;
-
-        if (playerMonsters.Count > 0 && enemyMonsters.Count > 0)
-        {
-            StartCombat();
-        }
-    }
-
-    private IEnumerator SpawnNextWave()
-    {
-        WaveConfiguration currentWave = currentCombatTemplate.waves[currentWaveIndex];
-        Debug.Log($"Spawning wave {currentWaveIndex + 1}: {currentWave.waveName}");
-        AddCombatLogEntry($"Wave {currentWaveIndex + 1}: {currentWave.waveName}");
-
-        // Clear previous wave enemies from lists
-        enemyMonsters.Clear();
-        currentWaveEnemies.Clear();
-
-        // Spawn new wave enemies
-        yield return StartCoroutine(SpawnWaveEnemies(currentWave));
-
-        // Update enemy list
-        enemyMonsters.AddRange(currentWaveEnemies);
-
-        Debug.Log($"Wave {currentWaveIndex + 1} spawned with {currentWaveEnemies.Count} enemies");
-    }
-
-    private IEnumerator SpawnWaveEnemies(WaveConfiguration wave)
-    {
-        int spawnPointIndex = 0; // Track which spawn point to use
-
-        foreach (EnemySpawn enemySpawn in wave.enemySpawns)
-        {
-            for (int i = 0; i < enemySpawn.spawnCount; i++)
-            {
-                // Get specific spawn point by index instead of finding "available" one
-                Transform spawnPoint = GetEnemySpawnPointByIndex(spawnPointIndex);
-                if (spawnPoint == null)
-                {
-                    Debug.LogWarning($"No spawn point found at index {spawnPointIndex}!");
-                    continue;
-                }
-
-                // Spawn the enemy
-                Monster spawnedEnemy = SpawnWaveEnemy(enemySpawn, spawnPoint, currentWaveIndex);
-                if (spawnedEnemy != null)
-                {
-                    currentWaveEnemies.Add(spawnedEnemy);
-                    ApplyEnemyDifficultyModifiers(spawnedEnemy);
-
-                    Debug.Log($"✅ Spawned enemy {spawnPointIndex + 1} on {spawnPoint.name}");
-                }
-
-                // Move to next spawn point (cycle through available spawn points)
-                spawnPointIndex++;
-
-                // Delay between spawns if specified
-                if (enemySpawn.spawnDelay > 0)
-                {
-                    yield return new WaitForSeconds(enemySpawn.spawnDelay);
-                }
-            }
-        }
-    }
-
-    private Transform GetEnemySpawnPointByIndex(int index)
-    {
-        GameSetup gameSetup = FindFirstObjectByType<GameSetup>();
-        if (gameSetup?.enemySpawnPoints == null || gameSetup.enemySpawnPoints.Length == 0)
-        {
-            Debug.LogError("No enemy spawn points found in GameSetup!");
-            return null;
-        }
-
-        // Use modulo to cycle through spawn points if we have more enemies than spawn points
-        int actualIndex = index % gameSetup.enemySpawnPoints.Length;
-
-        Debug.Log($"Assigning spawn point {actualIndex} ({gameSetup.enemySpawnPoints[actualIndex].name}) for enemy {index + 1}");
-
-        return gameSetup.enemySpawnPoints[actualIndex];
-    }
-
-
-    private Monster SpawnWaveEnemy(EnemySpawn enemySpawn, Transform spawnPoint, int waveIndex)
-    {
-        // Get GameSetup reference for monster prefab
-        GameSetup gameSetup = FindFirstObjectByType<GameSetup>();
-        if (gameSetup?.monsterPrefab == null)
-        {
-            Debug.LogError("No monster prefab found in GameSetup!");
-            return null;
-        }
-
-        // Create the monster GameObject
-        GameObject monsterGO = Instantiate(gameSetup.monsterPrefab, spawnPoint.position, spawnPoint.rotation);
-        Monster monster = monsterGO.GetComponent<Monster>();
-
-        // Create runtime monster data
-        MonsterData runtimeData = CreateRuntimeEnemyDataFromSpawn(enemySpawn);
-
-        // Setup the monster
-        monster.monsterData = runtimeData;
-        monster.isPlayerControlled = false;
-        monster.waveIndex = waveIndex;
-        monster.InitializeMonster();
-
-        // Spawn 3D model if available
-        if (gameSetup.spawnModels && runtimeData.modelPrefab != null)
-        {
-            SpawnModelForWaveEnemy(runtimeData.modelPrefab, monster.transform, gameSetup);
-        }
-
-        // Set name
-        monsterGO.name = $"{runtimeData.monsterName} (Wave {waveIndex + 1})";
-
-        return monster;
-    }
-
-    private MonsterData CreateRuntimeEnemyDataFromSpawn(EnemySpawn enemySpawn)
-    {
-        // Clone the original MonsterData
-        MonsterData runtimeData = Instantiate(enemySpawn.monsterData);
-
-        // Apply level and star scaling
-        MonsterStats effectiveStats = enemySpawn.GetEffectiveStats();
-
-        // Update base stats
-        runtimeData.baseHP = effectiveStats.health;
-        runtimeData.baseATK = effectiveStats.attack;
-        runtimeData.baseDEF = effectiveStats.defense;
-        runtimeData.baseSPD = effectiveStats.speed;
-        runtimeData.baseEnergy = effectiveStats.energy;
-
-        // Update name
-        string rarity = MonsterData.GetRarityName(enemySpawn.starLevel);
-        runtimeData.monsterName = $"{enemySpawn.monsterData.monsterName} Lv.{enemySpawn.monsterLevel} ({rarity})";
-
-        return runtimeData;
-    }
-
-    private void SpawnModelForWaveEnemy(GameObject modelPrefab, Transform parent, GameSetup gameSetup)
-    {
-        GameObject model = Instantiate(modelPrefab, parent);
-        model.transform.localPosition = gameSetup.modelOffset;
-        model.transform.localScale = Vector3.Scale(model.transform.localScale, gameSetup.modelScale);
-        model.transform.localRotation = Quaternion.identity;
-        model.name = "3D_Model";
-
-        // Add ModelController if needed
-        ModelController modelController = model.GetComponent<ModelController>();
-        if (modelController == null)
-        {
-            modelController = model.AddComponent<ModelController>();
-        }
-
-        if (gameSetup.spawnHealthBars && gameSetup.healthBarPrefab != null)
-        {
-            modelController.healthBarPrefab = gameSetup.healthBarPrefab;
-        }
-    }
-
-    private void ClearPreviousWaveEnemies()
-    {
-        // Destroy any remaining enemies from previous wave
-        foreach (Monster enemy in enemyMonsters)
-        {
-            if (enemy != null)
-            {
-                Destroy(enemy.gameObject);
-            }
-        }
-
-        enemyMonsters.Clear();
-        currentWaveEnemies.Clear();
-
-        Debug.Log("Cleared previous wave enemies - spawn points are now available");
-    }
-
-    private void HandleAllWavesCompleted()
-    {
-        Debug.Log("🎉 All waves completed! Distributing rewards...");
-
-        // Use existing victory handling
-        HandleVictory();
-    }
-
 
     private void EndCombat(bool playerWon)
     {
@@ -947,44 +631,39 @@ public class CombatManager : MonoBehaviour
         }
     }
 
+    // ✅ REPLACE the HandleVictory method in CombatManager.cs
+
     private void HandleVictory()
     {
-        Debug.Log("🎉 Victory! Calculating rewards and XP...");
+        Debug.Log("🎉 === BATTLE VICTORY === 🎉");
 
-        // Get battle data for rewards
+        // Get battle data for rewards and progression
         if (BattleDataManager.Instance != null && BattleDataManager.Instance.HasValidBattleData())
         {
             var battleData = BattleDataManager.Instance.GetCurrentBattleData();
-            var combatTemplate = battleData.combatTemplate;
 
-            if (combatTemplate?.rewards != null)
+            // Generate rewards
+            var rewards = GenerateBattleRewards(battleData);
+
+            // Calculate stars earned (you can make this more sophisticated)
+            int starsEarned = CalculateStarsEarned();
+
+            // ✅ NEW: Show victory sequence instead of immediate scene transition
+            if (VictoryRewardManager.Instance != null)
             {
-                // Generate combat result with XP
-                CombatResult result = combatTemplate.rewards.GenerateRewards(
-                    battleData.regionId,
-                    CalculateChapterFromBattleSequence(battleData.battleSequenceId),
-                    battleData.levelId
-                );
-
-                // Show victory sequence with rewards including XP
-                if (VictoryRewardManager.Instance != null)
-                {
-                    VictoryRewardManager.Instance.ShowVictorySequence(battleData, result, 3);
-                }
+                VictoryRewardManager.Instance.ShowVictorySequence(battleData, rewards, starsEarned);
+            }
+            else
+            {
+                Debug.LogWarning("VictoryRewardManager.Instance is null! Using fallback victory handling.");
+                StartCoroutine(FallbackVictoryHandling(battleData, rewards, starsEarned));
             }
         }
+        else
+        {
+            Debug.LogError("No valid battle data found for victory handling!");
+        }
     }
-
-    /// <summary>
-    /// Calculate chapter number from battle sequence ID
-    /// </summary>
-    private int CalculateChapterFromBattleSequence(int battleSequenceId)
-    {
-        // Assuming 8 battles per chapter, calculate chapter number
-        // battleSequenceId 1-8 = Chapter 1, 9-16 = Chapter 2, etc.
-        return ((battleSequenceId - 1) / 8) + 1;
-    }
-
 
     // ✅ FIX the GenerateBattleRewards method in CombatManager.cs
 
@@ -1490,6 +1169,133 @@ public class CombatManager : MonoBehaviour
         }
     }
 
+
+    private IEnumerator ExecuteMultiTargetActionSequence(MonsterAction action, List<Monster> targets)
+    {
+        Debug.Log($"Starting multi-target sequence for {action.actionName} on {targets.Count} targets");
+
+        // FOR MELEE ATTACKS: Move to center of targets first
+        if (action.IsMeleeAttack && targets.Count > 0)
+        {
+            yield return StartCoroutine(MoveToMultiTargetPosition(targets));
+        }
+
+        // TRIGGER THE ATTACK ANIMATION
+        if (currentActiveMonster.modelController != null)
+        {
+            // For multi-target, we trigger animation with the first target for direction
+            Monster firstTarget = targets.FirstOrDefault(t => t != null && t.isAlive);
+            if (firstTarget != null)
+            {
+                currentActiveMonster.modelController.TriggerAttackAnimation(action, firstTarget);
+            }
+        }
+
+        // Wait for animation windup
+        yield return new WaitForSeconds(0.5f);
+
+        // Track how many attack sequences are still running
+        int activeAttacks = 0;
+
+        // Execute attack on each target with delays
+        foreach (Monster target in targets)
+        {
+            if (target != null && target.isAlive)
+            {
+                activeAttacks++;
+                float delay = targets.IndexOf(target) * 0.2f;
+                StartCoroutine(ExecuteDelayedMultiTargetAttack(action, target, delay, () => {
+                    activeAttacks--;
+                }));
+            }
+        }
+
+        // Wait for all attacks to complete
+        while (activeAttacks > 0)
+        {
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        // FOR MELEE ATTACKS: Return to original position
+        if (action.IsMeleeAttack)
+        {
+            yield return StartCoroutine(ReturnToOriginalPosition());
+        }
+
+        // Wait a bit longer for visual effects to finish
+        yield return new WaitForSeconds(0.5f);
+
+        // Mark turn as completed and end the turn
+        currentActiveMonster.hasTakenTurn = true;
+
+        Debug.Log($"{currentActiveMonster.monsterData.monsterName} completed multi-target turn");
+
+        // End the turn automatically
+        OnTurnCompleted();
+    }
+
+    private IEnumerator MoveToMultiTargetPosition(List<Monster> targets)
+    {
+        if (currentActiveMonster == null || targets.Count == 0) yield break;
+
+        // Calculate center position of all targets
+        Vector3 centerPosition = Vector3.zero;
+        int validTargets = 0;
+
+        foreach (Monster target in targets)
+        {
+            if (target != null && target.isAlive)
+            {
+                centerPosition += target.transform.position;
+                validTargets++;
+            }
+        }
+
+        if (validTargets == 0) yield break;
+
+        centerPosition /= validTargets;
+
+        // Move slightly back from center for better attack position
+        Vector3 direction = (centerPosition - currentActiveMonster.transform.position).normalized;
+        Vector3 attackPosition = centerPosition - direction * 2f; // 2 units back from center
+
+        // Trigger movement animation
+        if (currentActiveMonster.modelController != null)
+        {
+            currentActiveMonster.modelController.TriggerMovementAnimation(true);
+        }
+
+        // Move to attack position
+        float moveDistance = Vector3.Distance(currentActiveMonster.transform.position, attackPosition);
+        float moveTime = moveDistance / currentActiveMonster.moveSpeed;
+        float elapsedTime = 0f;
+
+        Vector3 startPosition = currentActiveMonster.transform.position;
+
+        Debug.Log($"{currentActiveMonster.monsterData.monsterName} moving to multi-target attack position");
+
+        while (elapsedTime < moveTime)
+        {
+            float t = elapsedTime / moveTime;
+            currentActiveMonster.transform.position = Vector3.Lerp(startPosition, attackPosition, t);
+
+            // Face the center while moving
+            currentActiveMonster.transform.LookAt(new Vector3(centerPosition.x, currentActiveMonster.transform.position.y, centerPosition.z));
+
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        currentActiveMonster.transform.position = attackPosition;
+
+        // Stop movement animation
+        if (currentActiveMonster.modelController != null)
+        {
+            currentActiveMonster.modelController.TriggerMovementAnimation(false);
+        }
+
+        Debug.Log($"{currentActiveMonster.monsterData.monsterName} reached multi-target attack position");
+    }
 
     public IEnumerator ReturnToOriginalPosition()
     {

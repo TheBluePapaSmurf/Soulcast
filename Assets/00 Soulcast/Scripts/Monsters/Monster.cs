@@ -1,4 +1,4 @@
-﻿// Enhanced Monster.cs with Buff/Debuff System
+﻿// Enhanced Monster.cs
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,25 +23,27 @@ public class Monster : MonoBehaviour
     public float moveSpeed = 2f;
     public float meleeAttackDistance = 1.5f;
     public Vector3 originalPosition;
-    public Quaternion originalRotation;
+    public Quaternion originalRotation; // ADD THIS
+
 
     [Header("Combat State")]
     public bool isPlayerControlled = true;
     public bool isAlive = true;
     public bool hasTakenTurn = false;
 
-    [Header("Wave Information")]
-    public int waveIndex = 0; // Which wave this monster belongs to
-
     [Header("Action Cooldowns")]
     public Dictionary<MonsterAction, int> actionCooldowns = new Dictionary<MonsterAction, int>();
 
-    [Header("Active Buff/Debuff Effects")]
-    public List<ActiveBuffDebuffEffect> activeBuffDebuffEffects = new List<ActiveBuffDebuffEffect>();
+    [Header("Active Effects")]
+    public List<ActiveStatusEffect> activeStatusEffects = new List<ActiveStatusEffect>();
+    public List<ActiveStatModifier> activeStatModifiers = new List<ActiveStatModifier>();
 
     [Header("Performance Settings")]
     public bool useFixedTimeStep = true;
     public float movementTimeStep = 0.02f; // 50 FPS for movement
+
+    // Legacy support
+    private Dictionary<string, int> statusEffects = new Dictionary<string, int>();
 
     public void Start()
     {
@@ -85,7 +87,9 @@ public class Monster : MonoBehaviour
         }
 
         originalPosition = transform.position;
-        originalRotation = transform.rotation;
+        originalPosition = transform.position;
+        originalRotation = transform.rotation; // ADD THIS
+
     }
 
     public bool CanUseAction(MonsterAction action)
@@ -105,13 +109,6 @@ public class Monster : MonoBehaviour
         if (hasTakenTurn)
         {
             Debug.LogWarning($"{gameObject.name} has already taken their turn!");
-            return false;
-        }
-
-        // Check if prevented from acting by buff/debuff effects
-        if (IsPreventedFromActing())
-        {
-            Debug.LogWarning($"{gameObject.name} is prevented from acting by an effect!");
             return false;
         }
 
@@ -191,26 +188,6 @@ public class Monster : MonoBehaviour
         CompleteTurn();
     }
 
-    /// <summary>
-    /// Notify UI components about buff/debuff changes
-    /// </summary>
-    private void NotifyBuffDebuffChanged()
-    {
-        // Find and update floating health bar
-        var healthBar = GetComponentInChildren<FloatingHealthBar>();
-        if (healthBar != null)
-        {
-            healthBar.OnBuffDebuffChanged();
-        }
-
-        // Notify combat UI if needed
-        if (CombatManager.Instance != null)
-        {
-            CombatManager.Instance.OnMonsterStatsChanged();
-        }
-    }
-
-
     private void CompleteTurn()
     {
         hasTakenTurn = true;
@@ -225,7 +202,8 @@ public class Monster : MonoBehaviour
         }
     }
 
-    // Movement methods
+
+    // NEW: Movement towards target
     private IEnumerator MoveToTarget(Monster target)
     {
         if (target == null) yield break;
@@ -328,6 +306,7 @@ public class Monster : MonoBehaviour
         transform.rotation = originalRotation;
     }
 
+
     private IEnumerator ExecuteActionSequence(MonsterAction action, Monster target)
     {
         // Trigger attack animation
@@ -378,8 +357,9 @@ public class Monster : MonoBehaviour
                 break;
         }
 
-        // Apply buff/debuff effects
-        ApplyBuffDebuffEffects(action, target);
+        // Apply status effects and stat modifiers
+        ApplyStatusEffects(action, target);
+        ApplyStatModifiers(action, target);
 
         // Self-heal if specified
         if (action.healsUser)
@@ -445,7 +425,8 @@ public class Monster : MonoBehaviour
         }
     }
 
-    // Timing-specific movement methods
+    // In Monster.cs - voeg deze methodes toe voor timing-specific movement
+
     public IEnumerator MoveToTargetForTimingAttack(Monster target)
     {
         if (target == null) yield break;
@@ -545,6 +526,7 @@ public class Monster : MonoBehaviour
         Debug.Log($"{monsterData.monsterName} moved to multi-target position after timing challenge");
     }
 
+    // ✅ REPLACE de ReturnToOriginalPositionAfterTiming methode in Monster.cs
     public IEnumerator ReturnToOriginalPositionAfterTiming()
     {
         // Trigger movement animation
@@ -559,11 +541,11 @@ public class Monster : MonoBehaviour
 
         Vector3 startPosition = transform.position;
 
-        // Calculate direction to face while walking back (same as normal ReturnToOriginalPosition)
+        // ✅ FIX: Calculate direction to face while walking back (same as normal ReturnToOriginalPosition)
         Vector3 directionToOriginal = (originalPosition - transform.position).normalized;
         Quaternion targetRotation = Quaternion.LookRotation(directionToOriginal);
 
-        // Start rotating towards the walking direction immediately
+        // ✅ FIX: Start rotating towards the walking direction immediately
         while (elapsedTime < moveTime)
         {
             float t = elapsedTime / moveTime;
@@ -571,7 +553,7 @@ public class Monster : MonoBehaviour
             // Move towards original position
             transform.position = Vector3.Lerp(startPosition, originalPosition, t);
 
-            // Face the direction we're walking to (not backwards)
+            // ✅ FIX: Face the direction we're walking to (not backwards)
             transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, t * 3f); // Faster rotation
 
             elapsedTime += Time.deltaTime;
@@ -580,7 +562,7 @@ public class Monster : MonoBehaviour
 
         transform.position = originalPosition;
 
-        // Final rotation should be the original spawn rotation, not the walking direction
+        // ✅ FIX: Final rotation should be the original spawn rotation, not the walking direction
         yield return StartCoroutine(RotateToOriginalFacing());
 
         // Stop movement animation
@@ -591,6 +573,7 @@ public class Monster : MonoBehaviour
 
         Debug.Log($"{monsterData.monsterName} returned to original position after timing attack with correct rotation");
     }
+
 
     private int CalculateHitDamage(MonsterAction action, Monster target, int hitIndex, int totalHits)
     {
@@ -622,11 +605,13 @@ public class Monster : MonoBehaviour
         return finalDamage;
     }
 
+    // ✅ FIX: Replace ExecuteHealAction in Monster.cs
+
     private void ExecuteHealAction(MonsterAction action, Monster target)
     {
         if (target == null) target = this; // Default to self
 
-        // Calculate heal amount with attack stat support
+        // ✅ ENHANCED: Calculate heal amount with attack stat support
         int healAmount = action.basePower;
 
         if (action.usesAttackStat)
@@ -643,186 +628,153 @@ public class Monster : MonoBehaviour
         target.Heal(healAmount);
     }
 
+
     private void ExecuteBuffAction(MonsterAction action, Monster target)
     {
         if (target == null) target = this; // Default to self
 
-        // Buff actions apply positive buff/debuff effects
-        ApplyBuffDebuffEffects(action, target);
+        // Buff actions apply positive stat modifiers
+        ApplyStatModifiers(action, target);
     }
 
     private void ExecuteDebuffAction(MonsterAction action, Monster target)
     {
         if (target == null) return;
 
-        // Debuff actions apply negative buff/debuff effects
-        ApplyBuffDebuffEffects(action, target);
+        // Debuff actions apply negative stat modifiers and status effects
+        ApplyStatModifiers(action, target);
+        ApplyStatusEffects(action, target);
     }
 
-    private void ApplyBuffDebuffEffects(MonsterAction action, Monster target)
+    private void ApplyStatusEffects(MonsterAction action, Monster target)
     {
-        foreach (var effect in action.buffDebuffEffects)
+        foreach (var statusEffect in action.statusEffects)
         {
-            Monster effectTarget = action.applySelfEffects ? this : target;
-
-            if (effectTarget != null)
+            if (target != null)
             {
-                effect.ApplyTo(effectTarget);
+                target.AddStatusEffect(statusEffect);
             }
         }
     }
 
-    // ===== BUFF/DEBUFF SYSTEM METHODS =====
-
-    /// <summary>
-    /// Add a buff/debuff effect to this monster
-    /// </summary>
-    public void AddBuffDebuffEffect(BuffDebuffEffect effect)
+    private void ApplyStatModifiers(MonsterAction action, Monster target)
     {
-        if (effect == null) return;
-
-        // Check if effect can stack or if it already exists
-        if (!effect.canStack)
+        foreach (var statModifier in action.statModifiers)
         {
-            // Remove existing instance of this effect
-            RemoveBuffDebuffEffect(effect);
-        }
-        else
-        {
-            // Check max stacks
-            int currentStacks = activeBuffDebuffEffects.Count(e => e.effect == effect);
-            if (currentStacks >= effect.maxStacks)
+            if (target != null)
             {
-                Debug.Log($"Maximum stacks ({effect.maxStacks}) reached for {effect.effectName}");
-                return;
+                target.AddStatModifier(statModifier);
             }
         }
+    }
 
-        // Add new active effect
-        ActiveBuffDebuffEffect activeEffect = new ActiveBuffDebuffEffect
+    public void AddStatusEffect(StatusEffect effect)
+    {
+        ActiveStatusEffect activeEffect = new ActiveStatusEffect
         {
-            effect = effect,
-            remainingTurns = effect.isPermanent ? -1 : effect.duration
+            statusEffect = effect,
+            remainingTurns = effect.duration
         };
+        activeStatusEffects.Add(activeEffect);
 
-        activeBuffDebuffEffects.Add(activeEffect);
-        ApplyBuffDebuffModifiers(effect);
-
-        // ✅ NEW: Notify UI
-        NotifyBuffDebuffChanged();
+        Debug.Log($"{monsterData.monsterName} is affected by {effect.effectName} for {effect.duration} turns");
     }
 
-    /// <summary>
-    /// Remove a specific buff/debuff effect
-    /// </summary>
-    public void RemoveBuffDebuffEffect(BuffDebuffEffect effect)
+    // ✅ ENHANCED: Replace AddStatModifier method in Monster.cs
+
+    public void AddStatModifier(StatModifier modifier)
     {
-        var effectsToRemove = activeBuffDebuffEffects.Where(e => e.effect == effect).ToList();
-
-        foreach (var activeEffect in effectsToRemove)
+        ActiveStatModifier activeModifier = new ActiveStatModifier
         {
-            activeBuffDebuffEffects.Remove(activeEffect);
-
-            // Reverse stat modifications
-            ReverseBuffDebuffModifiers(effect);
-        }
-
-        NotifyBuffDebuffChanged();
-    }
-
-    /// <summary>
-    /// Apply stat modifications from buff/debuff
-    /// </summary>
-    private void ApplyBuffDebuffModifiers(BuffDebuffEffect effect)
-    {
-        foreach (var modifier in effect.statModifiers)
-        {
-            int actualModifierValue = modifier.CalculateModifierValue(GetBaseStat(modifier.statType));
-
-            switch (modifier.statType)
-            {
-                case StatType.Attack:
-                    currentATK += actualModifierValue;
-                    break;
-                case StatType.Defense:
-                    currentDEF += actualModifierValue;
-                    break;
-                case StatType.Speed:
-                    currentSPD += actualModifierValue;
-                    break;
-                case StatType.HP:
-                    if (actualModifierValue > 0)
-                        Heal(actualModifierValue);
-                    else
-                        TakeDamage(-actualModifierValue);
-                    break;
-                case StatType.Energy:
-                    currentEnergy = Mathf.Max(0, currentEnergy + actualModifierValue);
-                    break;
-            }
-
-            Debug.Log($"📊 {monsterData.monsterName} {modifier.GetDisplayText()} applied");
-        }
-    }
-
-    /// <summary>
-    /// Reverse stat modifications from buff/debuff
-    /// </summary>
-    private void ReverseBuffDebuffModifiers(BuffDebuffEffect effect)
-    {
-        foreach (var modifier in effect.statModifiers)
-        {
-            int actualModifierValue = modifier.CalculateModifierValue(GetBaseStat(modifier.statType));
-
-            switch (modifier.statType)
-            {
-                case StatType.Attack:
-                    currentATK -= actualModifierValue;
-                    break;
-                case StatType.Defense:
-                    currentDEF -= actualModifierValue;
-                    break;
-                case StatType.Speed:
-                    currentSPD -= actualModifierValue;
-                    break;
-                    // HP and Energy modifications are not reversed as they're instant effects
-            }
-        }
-    }
-
-    /// <summary>
-    /// Get base stat value for calculations
-    /// </summary>
-    private int GetBaseStat(StatType statType)
-    {
-        return statType switch
-        {
-            StatType.Attack => monsterData.baseATK,
-            StatType.Defense => monsterData.baseDEF,
-            StatType.Speed => monsterData.baseSPD,
-            StatType.HP => monsterData.baseHP,
-            StatType.Energy => monsterData.baseEnergy,
-            _ => 0
+            statModifier = modifier,
+            remainingTurns = modifier.isPermanent ? -1 : modifier.duration
         };
+        activeStatModifiers.Add(activeModifier);
+
+        // Apply the modifier immediately
+        ApplyStatModifierToStats(modifier);
+
+        // ✅ ENHANCED: Better logging with percentage support
+        string modifierText = modifier.GetDisplayText();
+        string durationText = modifier.isPermanent ? "permanently" : $"for {modifier.duration} turns";
+        string modifierNameText = !string.IsNullOrEmpty(modifier.modifierName) ? $" ({modifier.modifierName})" : "";
+
+        Debug.Log($"✨ {monsterData.monsterName} gets {modifierText}{modifierNameText} {durationText}");
     }
 
-    /// <summary>
-    /// Check if monster has a specific effect active
-    /// </summary>
-    public bool HasEffect(BuffDebuffEffect effect)
+
+    // ✅ CORRECTED: Replace ApplyStatModifierToStats method in Monster.cs
+
+    private void ApplyStatModifierToStats(StatModifier modifier)
     {
-        return activeBuffDebuffEffects.Any(e => e.effect == effect);
+        int actualModifierValue = 0;
+
+        switch (modifier.statType)
+        {
+            case StatType.Attack:
+                // ✅ FIX: Use monsterData.baseATK instead of baseATK
+                actualModifierValue = modifier.CalculateModifierValue(monsterData.baseATK);
+                currentATK += actualModifierValue;
+                Debug.Log($"📊 {monsterData.monsterName} ATK: {monsterData.baseATK} + {actualModifierValue} = {currentATK}");
+                break;
+
+            case StatType.Defense:
+                // ✅ FIX: Use monsterData.baseDEF instead of baseDEF
+                actualModifierValue = modifier.CalculateModifierValue(monsterData.baseDEF);
+                currentDEF += actualModifierValue;
+                Debug.Log($"📊 {monsterData.monsterName} DEF: {monsterData.baseDEF} + {actualModifierValue} = {currentDEF}");
+                break;
+
+            case StatType.Speed:
+                // ✅ FIX: Use monsterData.baseSPD instead of baseSPD
+                actualModifierValue = modifier.CalculateModifierValue(monsterData.baseSPD);
+                currentSPD += actualModifierValue;
+                Debug.Log($"📊 {monsterData.monsterName} SPD: {monsterData.baseSPD} + {actualModifierValue} = {currentSPD}");
+                break;
+
+            case StatType.HP:
+                // For HP modifiers, we heal/damage instead of modifying max HP
+                if (modifier.isPercentage)
+                {
+                    // ✅ FIX: Use monsterData.baseHP instead of baseHP
+                    actualModifierValue = modifier.CalculateModifierValue(monsterData.baseHP);
+                }
+                else
+                {
+                    // Flat healing amount
+                    actualModifierValue = modifier.modifierAmount;
+                }
+
+                if (actualModifierValue > 0)
+                {
+                    Heal(actualModifierValue);
+                    Debug.Log($"💚 {monsterData.monsterName} healed for {actualModifierValue} HP");
+                }
+                else
+                {
+                    TakeDamage(-actualModifierValue);
+                    Debug.Log($"💔 {monsterData.monsterName} took {-actualModifierValue} HP damage");
+                }
+                break;
+
+            case StatType.Energy:
+                if (modifier.isPercentage)
+                {
+                    // ✅ FIX: Use monsterData.baseEnergy instead of baseEnergy
+                    actualModifierValue = modifier.CalculateModifierValue(monsterData.baseEnergy);
+                }
+                else
+                {
+                    actualModifierValue = modifier.modifierAmount;
+                }
+
+                currentEnergy = Mathf.Max(0, currentEnergy + actualModifierValue);
+                Debug.Log($"⚡ {monsterData.monsterName} energy: {currentEnergy}");
+                break;
+        }
     }
 
-    /// <summary>
-    /// Check if monster is prevented from acting (stun, sleep, etc.)
-    /// </summary>
-    public bool IsPreventedFromActing()
-    {
-        return activeBuffDebuffEffects.Any(e => e.effect.preventsAction);
-    }
 
-    // ===== DAMAGE AND HEALING =====
 
     public void TakeDamage(int damage, bool isCritical = false)
     {
@@ -831,13 +783,6 @@ public class Monster : MonoBehaviour
         if (monsterData != null)
         {
             Debug.Log($"{monsterData.monsterName} takes {damage} damage! HP: {currentHP}/{monsterData.baseHP}");
-        }
-
-        // Check for effects that clear on damage
-        var effectsToClear = activeBuffDebuffEffects.Where(e => e.effect.clearsOnDamage).ToList();
-        foreach (var effect in effectsToClear)
-        {
-            RemoveBuffDebuffEffect(effect.effect);
         }
 
         // Trigger hit animation and particle damage numbers
@@ -874,9 +819,6 @@ public class Monster : MonoBehaviour
     {
         isAlive = false;
 
-        // Clear all buff/debuff effects on death
-        activeBuffDebuffEffects.Clear();
-
         // Trigger death animation and effects
         if (modelController != null)
         {
@@ -889,8 +831,6 @@ public class Monster : MonoBehaviour
         }
     }
 
-
-    // ===== TURN MANAGEMENT =====
 
     public void StartNewTurn()
     {
@@ -911,66 +851,89 @@ public class Monster : MonoBehaviour
             }
         }
 
-        // Process buff/debuff effects
-        ProcessBuffDebuffEffects();
+        // Process status effects
+        ProcessStatusEffects();
+        ProcessStatModifiers();
     }
 
-    private void ProcessBuffDebuffEffects()
+    private void ProcessStatusEffects()
     {
-        var effectsToRemove = new List<ActiveBuffDebuffEffect>();
+        var effectsToRemove = new List<ActiveStatusEffect>();
 
-        foreach (var activeEffect in activeBuffDebuffEffects)
+        foreach (var activeEffect in activeStatusEffects)
         {
-            var effect = activeEffect.effect;
+            var effect = activeEffect.statusEffect;
 
-            // Apply per-turn effects with percentage calculation
-            if (effect.damagePerTurnPercent > 0)
+            // Apply damage/healing per turn
+            if (effect.damagePerTurn > 0)
             {
-                // Calculate damage as percentage of MAX HP
-                int percentageDamage = Mathf.RoundToInt(monsterData.baseHP * (effect.damagePerTurnPercent / 100f));
-                TakeDamage(percentageDamage);
-                Debug.Log($"{monsterData.monsterName} takes {percentageDamage} damage ({effect.damagePerTurnPercent:F1}% of max HP) from {effect.effectName}");
-            }
-            else if (effect.damagePerTurnFlat > 0)
-            {
-                // Fallback to flat damage
-                TakeDamage(effect.damagePerTurnFlat);
-                Debug.Log($"{monsterData.monsterName} takes {effect.damagePerTurnFlat} flat damage from {effect.effectName}");
+                TakeDamage(effect.damagePerTurn);
+                Debug.Log($"{monsterData.monsterName} takes {effect.damagePerTurn} damage from {effect.effectName}");
             }
 
-            if (effect.healPerTurnPercent > 0)
+            if (effect.healPerTurn > 0)
             {
-                // Calculate healing as percentage of MAX HP
-                int percentageHealing = Mathf.RoundToInt(monsterData.baseHP * (effect.healPerTurnPercent / 100f));
-                Heal(percentageHealing);
-                Debug.Log($"{monsterData.monsterName} heals {percentageHealing} HP ({effect.healPerTurnPercent:F1}% of max HP) from {effect.effectName}");
-            }
-            else if (effect.healPerTurnFlat > 0)
-            {
-                // Fallback to flat healing
-                Heal(effect.healPerTurnFlat);
-                Debug.Log($"{monsterData.monsterName} heals {effect.healPerTurnFlat} flat HP from {effect.effectName}");
+                Heal(effect.healPerTurn);
+                Debug.Log($"{monsterData.monsterName} heals {effect.healPerTurn} HP from {effect.effectName}");
             }
 
-            // Reduce duration (skip if permanent)
-            if (activeEffect.remainingTurns > 0)
+            // Reduce duration
+            activeEffect.remainingTurns--;
+            if (activeEffect.remainingTurns <= 0)
             {
-                activeEffect.remainingTurns--;
-                if (activeEffect.remainingTurns <= 0)
-                {
-                    effectsToRemove.Add(activeEffect);
-                }
+                effectsToRemove.Add(activeEffect);
             }
         }
 
         // Remove expired effects
         foreach (var effect in effectsToRemove)
         {
-            RemoveBuffDebuffEffect(effect.effect);
+            activeStatusEffects.Remove(effect);
+            Debug.Log($"{monsterData.monsterName} recovers from {effect.statusEffect.effectName}");
         }
     }
 
-    // ===== UTILITY METHODS =====
+    private void ProcessStatModifiers()
+    {
+        var modifiersToRemove = new List<ActiveStatModifier>();
+
+        foreach (var activeModifier in activeStatModifiers)
+        {
+            if (activeModifier.remainingTurns > 0)
+            {
+                activeModifier.remainingTurns--;
+                if (activeModifier.remainingTurns <= 0)
+                {
+                    modifiersToRemove.Add(activeModifier);
+                }
+            }
+        }
+
+        // Remove expired modifiers and reverse their effects
+        foreach (var modifier in modifiersToRemove)
+        {
+            activeStatModifiers.Remove(modifier);
+            ReverseStatModifier(modifier.statModifier);
+            Debug.Log($"{monsterData.monsterName}'s {modifier.statModifier.statType} modifier expires");
+        }
+    }
+
+    private void ReverseStatModifier(StatModifier modifier)
+    {
+        switch (modifier.statType)
+        {
+            case StatType.Attack:
+                currentATK -= modifier.modifierAmount;
+                break;
+            case StatType.Defense:
+                currentDEF -= modifier.modifierAmount;
+                break;
+            case StatType.Speed:
+                currentSPD -= modifier.modifierAmount;
+                break;
+                // HP and Energy modifications are not reversed as they're instant effects
+        }
+    }
 
     // Helper method to get all usable actions
     public List<MonsterAction> GetUsableActions()
@@ -989,8 +952,15 @@ public class Monster : MonoBehaviour
 }
 
 [System.Serializable]
-public class ActiveBuffDebuffEffect
+public class ActiveStatusEffect
 {
-    public BuffDebuffEffect effect;
+    public StatusEffect statusEffect;
+    public int remainingTurns;
+}
+
+[System.Serializable]
+public class ActiveStatModifier
+{
+    public StatModifier statModifier;
     public int remainingTurns; // -1 for permanent
 }

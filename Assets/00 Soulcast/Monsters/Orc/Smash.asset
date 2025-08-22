@@ -21,15 +21,19 @@ MonoBehaviour:
   attackRange: 0
   energyCost: 0
   cooldownTurns: 0
-  basePower: 10
+  basePower: 10000
   usesAttackStat: 1
   ignoresDefense: 0
   hitCount: 1
   timeBetweenHits: 0.3
   divideDamagePerHit: 1
-  buffDebuffEffects:
-  - {fileID: 11400000, guid: 00274282c1ff8494cad3cdce7d5a090a, type: 2}
-  applySelfEffects: 0
+  statusEffects:
+  - effectName: Continuous Damage
+    duration: 1
+    damagePerTurn: 50
+    healPerTurn: 0
+    preventAction: 0
+  statModifiers: []
   effectPrefab: {fileID: 0}
   soundEffect: {fileID: 0}
   icon: {fileID: 21300000, guid: 13375c249694fac42ab51e7e33351ab8, type: 3}

@@ -637,40 +637,22 @@ public class CollectedMonster
     // ========== EXPERIENCE AND LEVELING ==========
 
     /// <summary>
-    /// Add experience to the monster (ENHANCED DEBUG VERSION)
+    /// Add experience to the monster
     /// </summary>
     public bool AddExperience(int expAmount)
     {
-        Debug.Log($"🎯 === MONSTER ADD EXPERIENCE ===");
-        Debug.Log($"🎯 Monster: {monsterData?.monsterName ?? "NULL MonsterData"}");
-        Debug.Log($"🎯 XP to add: {expAmount}");
-        Debug.Log($"🎯 Current level: {currentLevel}");
-        Debug.Log($"🎯 Current XP: {currentExperience}");
-        Debug.Log($"🎯 Required for next level: {GetExperienceRequiredForNextLevel()}");
-
-        if (expAmount <= 0)
-        {
-            Debug.LogWarning($"🎯 Invalid XP amount: {expAmount}");
-            return false;
-        }
-
-        int oldExperience = currentExperience;
-        int oldLevel = currentLevel;
+        if (expAmount <= 0) return false;
 
         currentExperience += expAmount;
         bool leveledUp = false;
 
-        Debug.Log($"🎯 New current XP: {currentExperience}");
-
         // Check for level ups
         while (currentExperience >= GetExperienceRequiredForNextLevel() && currentLevel < GetMaxLevel())
         {
-            int xpToDeduct = GetExperienceRequiredForNextLevel();
-            currentExperience -= xpToDeduct;
+            currentExperience -= GetExperienceRequiredForNextLevel();
             currentLevel++;
             leveledUp = true;
 
-            Debug.Log($"🎯 LEVEL UP! New level: {currentLevel}, XP after level up: {currentExperience}");
             Debug.Log($"🎉 {monsterData?.monsterName} leveled up to level {currentLevel}!");
         }
 
@@ -678,60 +660,36 @@ public class CollectedMonster
         if (leveledUp)
         {
             currentStats = CalculateCurrentStats();
-            Debug.Log($"🎯 Stats refreshed due to level up");
         }
-
-        Debug.Log($"🎯 Final state: Level {currentLevel}, XP {currentExperience}/{GetExperienceRequiredForNextLevel()}");
-        Debug.Log($"🎯 Summary: {oldLevel}→{currentLevel}, {oldExperience}→{currentExperience}, Leveled up: {leveledUp}");
-        Debug.Log($"🎯 === END MONSTER XP ===");
 
         return leveledUp;
     }
 
-
     /// <summary>
-    /// Get experience required for next level (USES MonsterData)
+    /// Get experience required for next level
     /// </summary>
     public int GetExperienceRequiredForNextLevel()
     {
-        if (monsterData == null)
-        {
-            Debug.LogWarning("⚠️ MonsterData is null, using fallback XP calculation");
-            return currentLevel * 100; // Fallback
-        }
-
-        // ✅ CORRECT: Use MonsterData properties
-        float baseXP = monsterData.baseExperienceRequired;
-        float growthRate = monsterData.experienceGrowthRate;
-
-        // Calculate XP requirement based on MonsterData
-        int requiredXP = Mathf.RoundToInt(baseXP * Mathf.Pow(growthRate, currentLevel - 1));
-
-        // Ensure minimum value
-        return Mathf.Max(requiredXP, 50);
+        return currentLevel * 100; // Simple formula
     }
 
+    /// <summary>
+    /// Get maximum level for this monster
+    /// </summary>
+    public int GetMaxLevel()
+    {
+        return 100;
+    }
+
+    /// <summary>
+    /// Get experience progress to next level (0.0 to 1.0)
+    /// </summary>
     public float GetExperienceProgress()
     {
         if (currentLevel >= GetMaxLevel()) return 1.0f;
 
         int requiredExp = GetExperienceRequiredForNextLevel();
         return requiredExp > 0 ? (float)currentExperience / requiredExp : 0f;
-    }
-
-    /// <summary>
-    /// Get maximum level for this monster (USES MonsterData)
-    /// </summary>
-    public int GetMaxLevel()
-    {
-        if (monsterData == null)
-        {
-            Debug.LogWarning("⚠️ MonsterData is null, using fallback max level");
-            return 100; // Fallback
-        }
-
-        // ✅ CORRECT: Use MonsterData property
-        return monsterData.maxLevel;
     }
 
     // ========== UTILITY METHODS ==========
@@ -814,28 +772,6 @@ public class CollectedMonster
         }
     }
 
-    [ContextMenu("🧪 Test Add 200 XP")]
-    public void TestAdd200XP()
-    {
-        Debug.Log($"🧪 Testing direct XP addition to {monsterData?.monsterName}");
-        bool result = AddExperience(200);
-        Debug.Log($"🧪 XP addition result: {result}");
-    }
-
-    [ContextMenu("🧪 Debug XP State")]
-    public void DebugXPState()
-    {
-        Debug.Log($"🧪 === XP STATE DEBUG ===");
-        Debug.Log($"🧪 Monster: {monsterData?.monsterName ?? "NULL MonsterData"}");
-        Debug.Log($"🧪 UniqueID: {uniqueID}");
-        Debug.Log($"🧪 Current Level: {currentLevel}");
-        Debug.Log($"🧪 Current XP: {currentExperience}");
-        Debug.Log($"🧪 Required for next level: {GetExperienceRequiredForNextLevel()}");
-        Debug.Log($"🧪 Max level: {GetMaxLevel()}");
-        Debug.Log($"🧪 XP Progress: {GetExperienceProgress():P1}");
-        Debug.Log($"🧪 === END DEBUG ===");
-    }
-
 
     /// <summary>
     /// Validate monster data integrity
@@ -886,35 +822,6 @@ public class CollectedMonster
 
         return isValid;
     }
-
-    /// <summary>
-    /// Get experience required for the current level (level floor)
-    /// </summary>
-    public int GetExperienceRequiredForCurrentLevel()
-    {
-        if (currentLevel <= 1)
-            return 0;
-
-        // Calculate XP required for current level
-        int xpForCurrentLevel = 0;
-        for (int level = 1; level < currentLevel; level++)
-        {
-            xpForCurrentLevel += GetExperienceRequiredForLevel(level);
-        }
-
-        return xpForCurrentLevel;
-    }
-
-    /// <summary>
-    /// Get experience required for a specific level
-    /// </summary>
-    private int GetExperienceRequiredForLevel(int level)
-    {
-        // Standard RPG XP formula: baseXP * level^1.5
-        int baseXP = 100;
-        return Mathf.RoundToInt(baseXP * Mathf.Pow(level, 1.5f));
-    }
-
 
     /// <summary>
     /// Get summary of this monster for debugging
