@@ -67,11 +67,11 @@ public class MonsterAction : ScriptableObject
     [Tooltip("Als true, wordt de schade per hit verdeeld. Als false, doet elke hit volledige schade")]
     public bool divideDamagePerHit = true; // Of de schade verdeeld wordt over hits
 
-    [Header("Status Effects")]
-    public List<StatusEffect> statusEffects = new List<StatusEffect>();
+    [Header("Buff/Debuff Effects")]
+    public List<BuffDebuffEffect> buffDebuffEffects = new List<BuffDebuffEffect>();
 
-    [Header("Stat Modifiers")]
-    public List<StatModifier> statModifiers = new List<StatModifier>();
+    [Tooltip("Apply effects to self instead of target")]
+    public bool applySelfEffects = false;
 
     [Header("Visual/Audio")]
     public GameObject effectPrefab;
@@ -89,79 +89,6 @@ public class MonsterAction : ScriptableObject
     public bool IsRangedAttack => type == ActionType.Attack && attackRange == AttackRange.Ranged;
     public bool IsAttack => type == ActionType.Attack && attackRange != AttackRange.None;
 }
-
-[System.Serializable]
-public class StatusEffect
-{
-    public string effectName;
-    public int duration;
-    public int damagePerTurn; // For poison/burn
-    public int healPerTurn;   // For regeneration
-    public bool preventAction; // For stun/sleep
-}
-
-// ✅ ENHANCED: Replace the StatModifier class in MonsterAction.cs
-
-[System.Serializable]
-public class StatModifier
-{
-    [Header("Basic Settings")]
-    public StatType statType;
-    public int modifierAmount;
-    public int duration;
-    public bool isPermanent = false;
-
-    [Header("Modifier Type")]
-    [Tooltip("If true, modifierAmount is a percentage (e.g., 25 = +25%). If false, it's a flat amount.")]
-    public bool isPercentage = false;
-
-    [Header("Visual Display")]
-    [Tooltip("Display name for this modifier (e.g., 'Rage Boost', 'Purify Blessing')")]
-    public string modifierName = "";
-
-    /// <summary>
-    /// Calculate the actual modifier value for given base stat
-    /// </summary>
-    public int CalculateModifierValue(int baseStat)
-    {
-        if (isPercentage)
-        {
-            // For percentage: modifierAmount = 25 means +25%
-            return Mathf.RoundToInt(baseStat * (modifierAmount / 100f));
-        }
-        else
-        {
-            // For flat: use modifierAmount directly
-            return modifierAmount;
-        }
-    }
-
-    /// <summary>
-    /// Get display text for UI (e.g., "+150 ATK" or "+25% ATK")
-    /// </summary>
-    public string GetDisplayText()
-    {
-        string prefix = modifierAmount >= 0 ? "+" : "";
-        string suffix = isPercentage ? "%" : "";
-        string statName = GetStatDisplayName();
-
-        return $"{prefix}{modifierAmount}{suffix} {statName}";
-    }
-
-    private string GetStatDisplayName()
-    {
-        return statType switch
-        {
-            StatType.Attack => "ATK",
-            StatType.Defense => "DEF",
-            StatType.Speed => "SPD",
-            StatType.HP => "HP",
-            StatType.Energy => "Energy",
-            _ => statType.ToString()
-        };
-    }
-}
-
 
 [System.Serializable]
 public enum StatType

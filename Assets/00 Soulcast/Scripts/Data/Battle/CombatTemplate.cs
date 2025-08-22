@@ -134,6 +134,10 @@ public class CombatReward
     public float soulCoinMultiplier = 1.0f;
     public bool useRegionBasedCoins = true;
 
+    [Header("Experience Rewards")]
+    public int baseExperienceReward = 100;          // Base XP per monster
+    public float experienceMultiplier = 1.0f;      // Multiplier based on difficulty
+
     [Header("Rune Rewards")]
     public bool guaranteedRuneDrop = true;
     public int maxRuneDrops = 1;
@@ -148,6 +152,9 @@ public class CombatReward
     {
         var result = new CombatResult();
 
+        Debug.Log($"🎁 === GENERATING REWARDS ===");
+        Debug.Log($"🎁 Region: {region}, Chapter: {chapter}, Level: {level}");
+
         // Calculate Soul Coins
         if (useRegionBasedCoins)
         {
@@ -157,6 +164,10 @@ public class CombatReward
         {
             result.soulCoinsEarned = Mathf.RoundToInt(baseSoulCoins * soulCoinMultiplier);
         }
+
+        // ✅ FIX: Calculate Experience (WAS MISSING!)
+        result.experienceEarned = CalculateExperienceReward(region, chapter, level);
+        Debug.Log($"🎁 Experience calculated: {result.experienceEarned}");
 
         // Generate Rune Drops
         if (guaranteedRuneDrop)
@@ -170,12 +181,12 @@ public class CombatReward
             }
             else
             {
-                // ✅ THIS SHOULD BE USED: Use custom manual configuration
+                // Use custom manual configuration
                 Debug.Log($"🎯 Using custom guaranteed runes: {customGuaranteedRunes.Count} configured");
 
                 foreach (var customRune in customGuaranteedRunes)
                 {
-                    // ✅ Check drop chance
+                    // Check drop chance
                     if (UnityEngine.Random.Range(0f, 1f) <= customRune.dropChance)
                     {
                         var generatedRune = customRune.GenerateRune();
@@ -185,17 +196,16 @@ public class CombatReward
                             Debug.Log($"✅ Generated custom rune: {generatedRune.runeName}");
                         }
                     }
-                    else
-                    {
-                        Debug.Log($"❌ Custom rune didn't drop (chance: {customRune.dropChance})");
-                    }
                 }
             }
         }
 
-        Debug.Log($"🎁 Final result: {result.runesEarned.Count} runes generated");
+        Debug.Log($"🎁 Final rewards: {result.soulCoinsEarned} coins, {result.experienceEarned} XP, {result.runesEarned.Count} runes");
+        Debug.Log($"🎁 === END GENERATING REWARDS ===");
+
         return result;
     }
+
 
     // ✅ Soul Coins Calculation per Combat Sequence
     public int CalculateSoulCoinsReward(int region, int chapter, int level)
@@ -263,6 +273,52 @@ public class CombatReward
     {
         return (chapter == 8) ? 1.5f : 1.0f; // 50% bonus for chapter boss (level 8)
     }
+
+    /// <summary>
+    /// Calculate total XP reward (FIXED VERSION)
+    /// </summary>
+    public int CalculateExperienceReward(int region, int chapter, int level)
+    {
+        Debug.Log($"🧮 === XP CALCULATION START ===");
+        Debug.Log($"🧮 Base XP reward: {baseExperienceReward}");
+        Debug.Log($"🧮 XP multiplier: {experienceMultiplier}");
+
+        // Quick safety check
+        if (baseExperienceReward <= 0)
+        {
+            Debug.LogError("❌ baseExperienceReward is 0 or negative! Using fallback value.");
+            baseExperienceReward = 500; // Fallback
+        }
+
+        // Simple calculation to start
+        int baseXP = baseExperienceReward;
+
+        // Apply multiplier
+        int finalXP = Mathf.RoundToInt(baseXP * experienceMultiplier);
+
+        Debug.Log($"🧮 Final XP calculated: {finalXP}");
+        Debug.Log($"🧮 === XP CALCULATION END ===");
+
+        return finalXP;
+    }
+
+
+    private int GetXPRegionBonus(int region)
+    {
+        if (region <= 4) return 0;          // Early game
+        if (region <= 8) return 200;       // Mid game  
+        if (region <= 11) return 500;      // Late game
+        return 1000;                       // End game
+    }
+
+    private int GetXPScalingByRegion(int region)
+    {
+        if (region <= 4) return 10;        // +10 per level (early)
+        if (region <= 8) return 25;        // +25 per level (mid)
+        if (region <= 11) return 50;       // +50 per level (late)
+        return 100;                        // +100 per level (end)
+    }
+
 
     // ✅ Rune Drop Rate Calculation
     public RuneRarity DetermineRuneRarity(int region, int chapter, int level, bool isBoss = false)
@@ -427,23 +483,19 @@ public class CombatReward
     }
 }
 
-// ✅ UPDATE CombatResult in Assets/00 Soulcast/Scripts/Data/Battle/CombatTemplate.cs
-
 public class CombatResult
 {
     public int soulCoinsEarned;
     public List<RuneData> runesEarned = new List<RuneData>();
-    public float experienceEarned;
-
-    // ✅ ADD: Monster experience gained dictionary
-    public Dictionary<string, int> monsterExperienceGained = new Dictionary<string, int>();
+    public int experienceEarned;
 
     public CombatResult()
     {
         runesEarned = new List<RuneData>();
-        monsterExperienceGained = new Dictionary<string, int>();
+        experienceEarned = 0;
     }
 }
+
 
 
 [System.Serializable]

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Default Gradiant main text
   m_EditorClassIdentifier: 
   colorMode: 2
-  topLeft: {r: 0.99215686, g: 0.8862745, b: 0.5764706, a: 1}
-  topRight: {r: 0.99215686, g: 0.8862745, b: 0.5764706, a: 1}
-  bottomLeft: {r: 0.7647059, g: 0.627451, b: 0.25490198, a: 1}
-  bottomRight: {r: 0.7647059, g: 0.627451, b: 0.25490198, a: 1}
+  topLeft: {r: 0.9622642, g: 0.6994653, b: 0.32226774, a: 1}
+  topRight: {r: 0.9622642, g: 0.6994653, b: 0.32226774, a: 1}
+  bottomLeft: {r: 0.6603774, g: 0.53541845, b: 0.19624422, a: 1}
+  bottomRight: {r: 0.6603774, g: 0.53541845, b: 0.19624422, a: 1}

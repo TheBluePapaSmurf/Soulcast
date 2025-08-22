@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a3621adadd502a14fa2ed1db59c1dd0a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 198048
+  packageName: Stylized Islands
+  packageVersion: 1.0
+  assetPath: Assets/Stylized Islands/DemoScene/Prefab/Islands.prefab
+  uploadId: 440062

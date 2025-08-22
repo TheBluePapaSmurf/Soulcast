@@ -198,28 +198,48 @@ public class MonsterCollectionManager : MonoBehaviour
     // ========== MONSTER PROGRESSION ==========
 
     /// <summary>
-    /// Add experience to a monster
+    /// Add experience to a monster (ENHANCED DEBUG)
     /// </summary>
     public bool AddExperienceToMonster(string monsterID, int experience)
     {
+        Debug.Log($"💫 === MONSTER COLLECTION MANAGER XP ===");
+        Debug.Log($"💫 Monster ID: '{monsterID}'");
+        Debug.Log($"💫 Experience to add: {experience}");
+
         if (experience <= 0)
         {
-            Debug.LogWarning("⚠️ Experience amount must be positive");
+            Debug.LogError($"💫 ❌ Experience amount must be positive: {experience}");
             return false;
         }
 
         var monster = GetMonsterByID(monsterID);
         if (monster == null)
         {
-            Debug.LogWarning($"⚠️ Monster not found with ID: {monsterID}");
+            Debug.LogError($"💫 ❌ Monster not found with ID: '{monsterID}'");
+
+            // Debug all available monster IDs
+            var allMonsters = GetAllMonsters();
+            Debug.Log($"💫 Available monsters in collection ({allMonsters.Count}):");
+            for (int i = 0; i < allMonsters.Count; i++)
+            {
+                Debug.Log($"💫   {i}: '{allMonsters[i].uniqueID}' - {allMonsters[i].monsterData?.monsterName ?? "NULL MonsterData"}");
+            }
+
             return false;
         }
 
+        Debug.Log($"💫 ✅ Monster found: {monster.monsterData?.monsterName ?? "NULL MonsterData"}");
+        Debug.Log($"💫 Before XP: Level {monster.currentLevel}, XP {monster.currentExperience}");
+
+        // Apply XP to the monster
         bool leveledUp = monster.AddExperience(experience);
+
+        Debug.Log($"💫 After XP: Level {monster.currentLevel}, XP {monster.currentExperience}");
+        Debug.Log($"💫 Level up occurred: {leveledUp}");
 
         if (leveledUp)
         {
-            Debug.Log($"🎉 {monster.GetDisplayName()} leveled up to level {monster.currentLevel}!");
+            Debug.Log($"💫 🎉 {monster.GetDisplayName()} leveled up to level {monster.currentLevel}!");
             OnMonsterLevelUp?.Invoke(monster);
             OnMonsterStatsChanged?.Invoke(monster);
         }
@@ -227,8 +247,11 @@ public class MonsterCollectionManager : MonoBehaviour
         // Auto-save
         SaveManager.Instance?.AutoSave();
 
+        Debug.Log($"💫 === END MONSTER COLLECTION XP ===");
         return leveledUp;
     }
+
+
 
     /// <summary>
     /// Set monster level directly (for debugging/admin)

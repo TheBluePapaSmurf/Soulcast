@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96414f3068a1ac74e8c0e8d1aca714b1, type: 3}
   m_Name: Purify
   m_EditorClassIdentifier: 
-  actionName: 
+  actionName: Purify
   description: Removes all harmful effects on the target ally and recovers its HP.
     The recovery amount is proportionate to the Attack Power. (Reusable in 3 turns)
   category: 1
@@ -28,14 +28,9 @@ MonoBehaviour:
   hitCount: 1
   timeBetweenHits: 0.3
   divideDamagePerHit: 0
-  statusEffects: []
-  statModifiers:
-  - statType: 0
-    modifierAmount: 15
-    duration: 2
-    isPermanent: 0
-    isPercentage: 1
-    modifierName: 
+  buffDebuffEffects:
+  - {fileID: 11400000, guid: 1fb141e3eb04c4444b204db5569f6dfc, type: 2}
+  applySelfEffects: 0
   effectPrefab: {fileID: 0}
   soundEffect: {fileID: 0}
   icon: {fileID: 21300000, guid: f73174cd6ca600347a456d1172155b03, type: 3}
