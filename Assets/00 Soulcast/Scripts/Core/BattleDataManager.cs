@@ -239,4 +239,47 @@ public class BattleDataManager : MonoBehaviour
             Debug.Log($"Available monsters in collection: {monsters.Count}");
         }
     }
+
+    [ContextMenu("🧪 Debug Selected Team")]
+    public void DebugSelectedTeam()
+    {
+        Debug.Log("🧪 === SELECTED TEAM DEBUG ===");
+
+        if (currentBattleData == null)
+        {
+            Debug.LogError("❌ currentBattleData is null!");
+            return;
+        }
+
+        if (currentBattleData.selectedTeamIDs == null)
+        {
+            Debug.LogError("❌ selectedTeamIDs is null!");
+            return;
+        }
+
+        Debug.Log($"🧪 Selected team has {currentBattleData.selectedTeamIDs.Count} monster IDs:");
+
+        for (int i = 0; i < currentBattleData.selectedTeamIDs.Count; i++)
+        {
+            string id = currentBattleData.selectedTeamIDs[i];
+            Debug.Log($"🧪 Monster {i}: ID = '{id}'");
+
+            // Try to get monster info
+            if (MonsterCollectionManager.Instance != null)
+            {
+                var monster = MonsterCollectionManager.Instance.GetMonsterByID(id);
+                if (monster != null)
+                {
+                    Debug.Log($"🧪   → Monster found: {monster.monsterData?.monsterName ?? "NULL MonsterData"} (Level {monster.currentLevel})");
+                }
+                else
+                {
+                    Debug.LogWarning($"🧪   → Monster NOT found for ID: {id}");
+                }
+            }
+        }
+
+        Debug.Log("🧪 === END DEBUG ===");
+    }
+
 }

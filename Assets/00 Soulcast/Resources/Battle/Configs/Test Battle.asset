@@ -22,6 +22,10 @@ MonoBehaviour:
     baseSoulCoins: 1000
     soulCoinMultiplier: 1
     useRegionBasedCoins: 1
+    baseExperienceReward: 2000
+    experienceMultiplier: 1
+    scaleXpWithEnemyLevel: 1
+    levelDifferenceBonus: 0.1
     guaranteedRuneDrop: 1
     maxRuneDrops: 1
     useRegionBasedDropRates: 0
