@@ -149,7 +149,12 @@ public class CurrencyDisplayUI : MonoBehaviour
     {
         if (element.currencyText == null) return;
 
-        if (element.animateOnChange && element.previousValue != newAmount && element.previousValue != 0)
+        // ✅ SAFETY CHECK: Alleen animeren als GameObject actief is
+        if (element.animateOnChange &&
+            element.previousValue != newAmount &&
+            element.previousValue != 0 &&
+            gameObject.activeInHierarchy &&    // ← Nieuwe check
+            isActiveAndEnabled)                 // ← Nieuwe check
         {
             // Stop any existing animation
             if (element.animationCoroutine != null)
@@ -157,8 +162,17 @@ public class CurrencyDisplayUI : MonoBehaviour
                 StopCoroutine(element.animationCoroutine);
             }
 
-            // Start new animation
-            element.animationCoroutine = StartCoroutine(AnimateCurrencyChange(element, element.previousValue, newAmount));
+            // Start new animation only if we can
+            try
+            {
+                element.animationCoroutine = StartCoroutine(AnimateCurrencyChange(element, element.previousValue, newAmount));
+            }
+            catch (System.Exception e)
+            {
+                // Fallback to direct update if coroutine fails
+                Debug.LogWarning($"⚠️ Currency animation failed, using direct update: {e.Message}");
+                element.currencyText.text = FormatCurrencyText(element, newAmount);
+            }
         }
         else
         {
@@ -236,4 +250,6 @@ public class CurrencyDisplayUI : MonoBehaviour
         isInitialized = false;
         Initialize();
     }
+
+
 }

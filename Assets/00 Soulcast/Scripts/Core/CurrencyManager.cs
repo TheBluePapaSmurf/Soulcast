@@ -139,4 +139,18 @@ public class CurrencyManager : MonoBehaviour
         else
             return crystals.ToString();
     }
+
+    public bool HasEnoughCurrency(ShopCurrency currencyType, int amount)
+    {
+        switch (currencyType)
+        {
+            case ShopCurrency.SoulCoins:
+                return GetSoulCoins() >= amount;
+            case ShopCurrency.PremiumCrystals:
+                return GetCrystals() >= amount;
+            // ... andere currency types
+            default:
+                return false;
+        }
+    }
 }

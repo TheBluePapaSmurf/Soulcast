@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ac484c59274c3548bebada3dafa7ffb, type: 3}
+  m_Name: Altar
+  m_EditorClassIdentifier: 
+  buildingName: Power-up Circle
+  description: 
+  buildingIcon: {fileID: 21300000, guid: 85f12994f23cc894f9e16705db741309, type: 3}
+  buildingPrefab: {fileID: 1943383248040438926, guid: 0ad0c8a31cdb89f4296ba3ce4ad3e6d2, type: 3}
+  gridSize: {x: 1, y: 1}
+  subCategory: Buildings
+  cost: 1000
+  currencyType: 0
+  requiredLevel: 1
+  canPlaceOnWater: 0
+  canPlaceOnTerrain: 1
+  requiresFlat: 1
+  purchaseSound: {fileID: 0}
+  placementSound: {fileID: 0}
+  removalSound: {fileID: 0}

@@ -39,6 +39,7 @@ MonoBehaviour:
     - Assembly-CSharp-firstpass
     - CFXRDemo
     - CFXRRuntime
+    - Cinemachine
     - KinoBloom.Runtime
     showAdvancedSettings: 0
   addMgrToSceneAutomatically: 0
