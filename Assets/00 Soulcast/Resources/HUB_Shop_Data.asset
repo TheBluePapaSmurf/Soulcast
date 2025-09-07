@@ -26,7 +26,7 @@ MonoBehaviour:
     maxQuantity: 0
     currentStock: 1
     category: 1
-    subFilter: 
+    subFilter: Building
     itemType: 1
     buildingData: {fileID: 11400000, guid: e46dbf0d25583da44afa263d1e82a8dd, type: 2}
     monsterData: {fileID: 0}
@@ -51,7 +51,7 @@ MonoBehaviour:
       customPowerUpCost: -1
       upgradeCosts: 
       isProceduralGenerated: 1
-    itemDataId: 
+    itemDataId: 1
     isAvailable: 1
     requiresUnlock: 0
     unlockCondition: 

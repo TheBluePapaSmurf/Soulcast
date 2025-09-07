@@ -1,5 +1,5 @@
 ﻿// Update: Assets/00 Soulcast/Scripts/UI/ShopCategoryPanel.cs
-
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -171,14 +171,26 @@ public class ShopCategoryPanel : MonoBehaviour
 
     void SetupFilterButtons()
     {
-        // Clear existing buttons
+        Debug.Log($"🔘 Setting up filter buttons for category {currentCategory}");
+
+        // ✅ CRITICAL: Clear existing buttons first
         ClearFilterButtons();
+
+        // ✅ SAFETY: Wait one frame to ensure clearing is complete
+        StartCoroutine(SetupFilterButtonsAfterClear());
+    }
+
+    // ✅ NEW: Helper coroutine to ensure proper timing
+    private System.Collections.IEnumerator SetupFilterButtonsAfterClear()
+    {
+        // Wait one frame to ensure all GameObjects are properly destroyed
+        yield return null;
 
         // Only create filter buttons if filters are specified
         if (currentAvailableFilters != null && currentAvailableFilters.Length > 0)
         {
-            // ✅ REMOVED: No more "All" filter button
-            // Only create specific filter buttons
+            Debug.Log($"🔘 Creating {currentAvailableFilters.Length} filter buttons for {currentCategory}");
+
             foreach (string filter in currentAvailableFilters)
             {
                 if (!string.IsNullOrEmpty(filter))
@@ -188,8 +200,7 @@ public class ShopCategoryPanel : MonoBehaviour
             }
 
             filterButtonContainer.gameObject.SetActive(true);
-
-            Debug.Log($"🔘 Created {currentAvailableFilters.Length} filter buttons (no 'All' button)");
+            Debug.Log($"✅ Created {currentAvailableFilters.Length} filter buttons successfully");
         }
         else
         {
@@ -198,6 +209,7 @@ public class ShopCategoryPanel : MonoBehaviour
             Debug.Log("🔘 No filters available - hiding filter container");
         }
     }
+
 
 
     void CreateFilterButton(string filterName)
@@ -226,16 +238,42 @@ public class ShopCategoryPanel : MonoBehaviour
 
     void ClearFilterButtons()
     {
+        // Clear dictionary first
         filterButtons.Clear();
 
         if (filterButtonContainer != null)
         {
+            // ✅ NEW: Use a more reliable approach to clear buttons
+            List<GameObject> buttonsToDestroy = new List<GameObject>();
+
+            // Collect all children
             foreach (Transform child in filterButtonContainer)
             {
-                DestroyImmediate(child.gameObject);
+                buttonsToDestroy.Add(child.gameObject);
             }
+
+            // Destroy all collected children
+            foreach (GameObject button in buttonsToDestroy)
+            {
+                if (button != null)
+                {
+                    // ✅ In Editor, use DestroyImmediate, in build use regular Destroy
+                    if (Application.isEditor && !Application.isPlaying)
+                    {
+                        DestroyImmediate(button);
+                    }
+                    else
+                    {
+                        button.SetActive(false); // Hide immediately
+                        Destroy(button);         // Destroy after frame
+                    }
+                }
+            }
+
+            Debug.Log($"🗑️ Cleared {buttonsToDestroy.Count} filter buttons for new category");
         }
     }
+
 
     public void SelectFilter(string filterName)
     {
@@ -331,7 +369,11 @@ public class ShopCategoryPanel : MonoBehaviour
 
     void CreateItemUI(ShopItem item)
     {
-        if (shopItemPrefab == null || itemContainer == null) return;
+        if (shopItemPrefab == null || itemContainer == null)
+        {
+            Debug.LogWarning($"⚠️ Cannot create item UI: shopItemPrefab or itemContainer is null in {gameObject.name}");
+            return;
+        }
 
         GameObject itemObj = Instantiate(shopItemPrefab, itemContainer);
         ShopItemUI itemUI = itemObj.GetComponent<ShopItemUI>();
@@ -360,50 +402,81 @@ public class ShopCategoryPanel : MonoBehaviour
 
     void SetupItemContainer()
     {
-        if (itemContainer != null)
+        // ✅ CRITICAL: Add null check
+        if (itemContainer == null)
         {
-            // Setup layout based on settings
-            HorizontalLayoutGroup horizontalLayout = itemContainer.GetComponent<HorizontalLayoutGroup>();
-            VerticalLayoutGroup verticalLayout = itemContainer.GetComponent<VerticalLayoutGroup>();
+            Debug.LogWarning($"⚠️ itemContainer is null in {gameObject.name}. Please assign it in the Inspector.");
+            return;
+        }
 
-            if (useHorizontalLayout)
+        // ✅ NEW: Check for ALL existing layout groups (including GridLayoutGroup)
+        HorizontalLayoutGroup horizontalLayout = itemContainer.GetComponent<HorizontalLayoutGroup>();
+        VerticalLayoutGroup verticalLayout = itemContainer.GetComponent<VerticalLayoutGroup>();
+        GridLayoutGroup gridLayout = itemContainer.GetComponent<GridLayoutGroup>();
+
+        if (useHorizontalLayout)
+        {
+            // ✅ FIRST: Remove any existing layout groups
+            if (verticalLayout != null)
             {
-                if (horizontalLayout == null)
-                    horizontalLayout = itemContainer.gameObject.AddComponent<HorizontalLayoutGroup>();
-
-                horizontalLayout.spacing = itemSpacing;
-                horizontalLayout.childControlWidth = false;
-                horizontalLayout.childControlHeight = false;
-                horizontalLayout.childForceExpandWidth = false;
-                horizontalLayout.childForceExpandHeight = false;
-
-                // Remove vertical layout if exists
-                if (verticalLayout != null)
-                    DestroyImmediate(verticalLayout);
+                DestroyImmediate(verticalLayout);
             }
-            else
+            if (gridLayout != null)
             {
-                if (verticalLayout == null)
-                    verticalLayout = itemContainer.gameObject.AddComponent<VerticalLayoutGroup>();
-
-                verticalLayout.spacing = itemSpacing;
-                verticalLayout.childControlWidth = false;
-                verticalLayout.childControlHeight = false;
-                verticalLayout.childForceExpandWidth = false;
-                verticalLayout.childForceExpandHeight = false;
-
-                // Remove horizontal layout if exists
-                if (horizontalLayout != null)
-                    DestroyImmediate(horizontalLayout);
+                DestroyImmediate(gridLayout);
             }
+
+            // ✅ THEN: Add horizontal layout if needed
+            if (horizontalLayout == null)
+            {
+                horizontalLayout = itemContainer.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            // Configure horizontal layout
+            horizontalLayout.spacing = itemSpacing;
+            horizontalLayout.childControlWidth = false;
+            horizontalLayout.childControlHeight = false;
+            horizontalLayout.childForceExpandWidth = false;
+            horizontalLayout.childForceExpandHeight = false;
+        }
+        else
+        {
+            // ✅ FIRST: Remove any existing layout groups
+            if (horizontalLayout != null)
+            {
+                DestroyImmediate(horizontalLayout);
+            }
+            if (gridLayout != null)
+            {
+                DestroyImmediate(gridLayout);
+            }
+
+            // ✅ THEN: Add vertical layout if needed
+            if (verticalLayout == null)
+            {
+                verticalLayout = itemContainer.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
+
+            // Configure vertical layout
+            verticalLayout.spacing = itemSpacing;
+            verticalLayout.childControlWidth = false;
+            verticalLayout.childControlHeight = false;
+            verticalLayout.childForceExpandWidth = false;
+            verticalLayout.childForceExpandHeight = false;
+
         }
     }
+
 
     public void ShowPanel()
     {
         if (panelRoot != null)
         {
             panelRoot.SetActive(true);
+        }
+        else
+        {
+            gameObject.SetActive(true);
         }
     }
 
@@ -414,6 +487,7 @@ public class ShopCategoryPanel : MonoBehaviour
             panelRoot.SetActive(false);
         }
     }
+
 }
 
 /// <summary>

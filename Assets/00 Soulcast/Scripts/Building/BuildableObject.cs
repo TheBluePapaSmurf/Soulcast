@@ -1,9 +1,8 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class BuildableObject : MonoBehaviour
 {
     [Header("Grid Properties")]
-    public Vector2Int gridSize = Vector2Int.one;
     public Vector2Int gridPosition;
 
     [Header("Building Data")]
@@ -31,13 +30,8 @@ public class BuildableObject : MonoBehaviour
 
         // Vind GridManager
         gridManager = FindAnyObjectByType<GridManager>();
-
-        // Als we BuildingData hebben, gebruik dan die grid size
-        if (buildingData != null)
-        {
-            gridSize = buildingData.GetGridSize();
-        }
     }
+
 
     void Start()
     {
@@ -54,9 +48,11 @@ public class BuildableObject : MonoBehaviour
         isPlaced = true;
 
         // Update world position based on grid
-        if (gridManager != null)
+        if (gridManager != null && buildingData != null)
         {
+            Vector2Int gridSize = buildingData.GetGridSize(); // ✅ Get from BuildingData
             Vector3 worldPos = gridManager.GridToWorldPosition(gridPosition);
+
             // Center the object in its grid area
             Vector3 centerOffset = new Vector3(
                 (gridSize.x - 1) * gridManager.cellSize * 0.5f,
@@ -67,53 +63,48 @@ public class BuildableObject : MonoBehaviour
         }
     }
 
+
     public void SetBuildingData(BuildingData data)
     {
         buildingData = data;
-        if (data != null)
-        {
-            gridSize = data.GetGridSize();
 
-            // Apply auto scaling when building data is set
-            if (enableAutoScaling && gridManager != null)
-            {
-                ApplyAutoScaling();
-            }
+        // Apply auto scaling when building data is set
+        if (enableAutoScaling && gridManager != null)
+        {
+            ApplyAutoScaling();
         }
     }
 
-    /// <summary>
-    /// Pas automatische scaling toe op basis van grid cell size
-    /// </summary>
+
     public void ApplyAutoScaling()
     {
-        if (gridManager == null || !enableAutoScaling) return;
+        if (gridManager == null || !enableAutoScaling || buildingData == null) return;
 
         float cellSize = gridManager.cellSize;
+
+        // ✅ Get gridSize directly from BuildingData
+        Vector2Int gridSize = buildingData.GetGridSize();
 
         // Bereken de target size op basis van grid cells
         float targetWidth = gridSize.x * cellSize * scaleMultiplier;
         float targetDepth = gridSize.y * cellSize * scaleMultiplier;
 
-        // Krijg de huidige bounds van het object
+        // Rest van de methode blijft hetzelfde...
         Bounds objectBounds = GetObjectBounds();
 
         if (objectBounds.size.x > 0 && objectBounds.size.z > 0)
         {
-            // Bereken scale factoren
             float scaleX = targetWidth / objectBounds.size.x;
             float scaleZ = targetDepth / objectBounds.size.z;
-
-            // Gebruik de kleinste scale factor om proportioneel te blijven
             float uniformScale = Mathf.Min(scaleX, scaleZ);
 
-            // Pas de nieuwe scale toe
             Vector3 newScale = baseScale * uniformScale;
             transform.localScale = newScale;
 
             Debug.Log($"Auto-scaled {gameObject.name} to {newScale} (Grid: {gridSize}, Cell Size: {cellSize})");
         }
     }
+
 
     /// <summary>
     /// Krijg de bounds van dit object
@@ -173,6 +164,11 @@ public class BuildableObject : MonoBehaviour
 
     public Vector2Int[] GetOccupiedGridPositions()
     {
+        if (buildingData == null) return new Vector2Int[0];
+
+        // ✅ Get gridSize from BuildingData
+        Vector2Int gridSize = buildingData.GetGridSize();
+
         Vector2Int[] positions = new Vector2Int[gridSize.x * gridSize.y];
         int index = 0;
 
@@ -188,11 +184,15 @@ public class BuildableObject : MonoBehaviour
         return positions;
     }
 
+
     void OnDrawGizmos()
     {
-        if (showBounds)
+        if (showBounds && buildingData != null)
         {
             Gizmos.color = boundsColor;
+
+            // ✅ Get gridSize from BuildingData
+            Vector2Int gridSize = buildingData.GetGridSize();
 
             if (gridManager != null && gridSize.x > 0 && gridSize.y > 0)
             {
@@ -204,31 +204,8 @@ public class BuildableObject : MonoBehaviour
                     gridSize.y * gridManager.cellSize
                 );
                 Gizmos.DrawWireCube(center, size);
-
-                // Teken cell divisions
-                Gizmos.color = Color.yellow;
-                for (int x = 0; x <= gridSize.x; x++)
-                {
-                    Vector3 start = center + new Vector3(
-                        (x - gridSize.x * 0.5f) * gridManager.cellSize,
-                        0,
-                        -gridSize.y * 0.5f * gridManager.cellSize
-                    );
-                    Vector3 end = start + new Vector3(0, 0, gridSize.y * gridManager.cellSize);
-                    Gizmos.DrawLine(start, end);
-                }
-
-                for (int y = 0; y <= gridSize.y; y++)
-                {
-                    Vector3 start = center + new Vector3(
-                        -gridSize.x * 0.5f * gridManager.cellSize,
-                        0,
-                        (y - gridSize.y * 0.5f) * gridManager.cellSize
-                    );
-                    Vector3 end = start + new Vector3(gridSize.x * gridManager.cellSize, 0, 0);
-                    Gizmos.DrawLine(start, end);
-                }
             }
+
             else
             {
                 // Fallback gizmo

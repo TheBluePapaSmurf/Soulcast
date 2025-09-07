@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13e5487577a324bec8e1e97cb1208b45, type: 3}
+  m_Name: Forest_TargetGen_Preset
+  m_EditorClassIdentifier: 
+  roofTiles: []
+  floorTiles: []
+  wallTiles: []
+  wallCorners: []
+  windowTiles: []
+  doorTiles: []
+  characters: []
+  roofDecorations: []
+  wallDecorations: []
+  floorDecorations:
+  - prefab: {fileID: 142234, guid: 816edc5dc2206fd42aba1a8fecb3fe4c, type: 3}
+    positionOffset: {x: 0, y: -0.22, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    spacing: 0
+    safeArea: 0
+    verticalRange: {x: 0, y: 100}
+    amountRange: {x: 20, y: 30}
+    randomRotation: 360
+    scaleRange: {x: 1, y: 3}
+    isExpanded: 0
+  - prefab: {fileID: 105290, guid: 22bc56c1814c2f44dada91f6ec7e9dde, type: 3}
+    positionOffset: {x: 0, y: -0.18, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    spacing: 0
+    safeArea: 0
+    verticalRange: {x: 0, y: 100}
+    amountRange: {x: 30, y: 50}
+    randomRotation: 360
+    scaleRange: {x: 1, y: 4}
+    isExpanded: 0
+  - prefab: {fileID: 232070993860639428, guid: af9df5a772900654a891a30494d3343d, type: 3}
+    positionOffset: {x: 0, y: -0.3, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    spacing: 0
+    safeArea: 0
+    verticalRange: {x: 0, y: 100}
+    amountRange: {x: 10, y: 30}
+    randomRotation: 360
+    scaleRange: {x: 0.5, y: 2}
+    isExpanded: 1

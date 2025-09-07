@@ -216,10 +216,13 @@ public class ShopUIManager : MonoBehaviour
             shopMainPanel.transform.DOKill();
             shopMainPanel.transform.localScale = Vector3.one;
 
-            // ✅ FIRST: Activate panel before any operations
+            // ✅ FIRST: Activate main panel
             shopMainPanel.SetActive(true);
 
-            Debug.Log("🏪 ShopMainPanel activated");
+            // ✅ CRITICAL: Ensure CategoryPanel stays active for navigation
+            EnsureCategoryPanelStaysActive();
+
+            Debug.Log("🏪 ShopMainPanel activated with CategoryPanel preserved");
 
             // ✅ THEN: Setup category after panel is active
             SelectCategory(ShopCategory.Normal);
@@ -228,30 +231,27 @@ public class ShopUIManager : MonoBehaviour
             shopMainPanel.transform.localScale = Vector3.zero;
             shopMainPanel.transform.DOScale(Vector3.one, 0.3f)
                 .SetEase(Ease.OutBack)
-                .SetUpdate(true);
-
-            // ✅ Refresh currency display when opening shop
-            UpdateCurrencyDisplay();
+                .OnComplete(() => {
+                    // ✅ DOUBLE CHECK: CategoryPanel is still active after animation
+                    EnsureCategoryPanelStaysActive();
+                    Debug.Log("✅ Shop opened with proper sequence");
+                });
 
             PlaySound(shopOpenSound);
             OnShopOpened?.Invoke();
-
-            Debug.Log("✅ Shop opened with proper sequence");
-        }
-        else
-        {
-            Debug.LogError("❌ ShopMainPanel is null! Cannot open shop.");
         }
     }
-
-
 
     public void CloseShop()
     {
         if (shopMainPanel != null)
         {
             shopMainPanel.transform.DOScale(Vector3.zero, 0.2f).SetEase(Ease.InBack)
-                .OnComplete(() => shopMainPanel.SetActive(false));
+                .OnComplete(() => {
+                    // ✅ SELECTIVE DEACTIVATION: Deactivate main panel but preserve CategoryPanel
+                    DeactivateShopContentExceptCategoryPanel();
+                    Debug.Log("🏪 Shop closed with CategoryPanel preserved for navigation");
+                });
 
             PlaySound(shopCloseSound);
             OnShopClosed?.Invoke();
@@ -264,10 +264,13 @@ public class ShopUIManager : MonoBehaviour
 
         Debug.Log($"🏪 SelectCategory called: {category}");
 
-        // ✅ SAFETY: Check if shop is actually open
-        if (shopMainPanel == null || !shopMainPanel.activeInHierarchy)
+        // ✅ ENSURE: CategoryPanel is always active for navigation
+        EnsureCategoryPanelStaysActive();
+
+        // ✅ SAFETY: Check if shop components are available
+        if (shopMainPanel == null)
         {
-            Debug.LogWarning($"⚠️ Cannot select category {category}: ShopMainPanel is not active");
+            Debug.LogWarning($"⚠️ Cannot select category {category}: ShopMainPanel is null");
             return;
         }
 
@@ -289,7 +292,6 @@ public class ShopUIManager : MonoBehaviour
         UpdateCategoryButtonVisuals();
         PlaySound(categorySelectSound);
     }
-
 
     void UpdateCategoryButtonVisuals()
     {
@@ -625,6 +627,60 @@ public class ShopUIManager : MonoBehaviour
             AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position, 0.6f);
         }
     }
+
+    /// <summary>
+    /// Ensures CategoryPanel stays active for navigation even when shop is closed
+    /// </summary>
+    void EnsureCategoryPanelStaysActive()
+    {
+        if (categoryPanel != null && !categoryPanel.gameObject.activeInHierarchy)
+        {
+            categoryPanel.gameObject.SetActive(true);
+            Debug.Log("🔧 CategoryPanel reactivated for navigation");
+        }
+    }
+
+    /// <summary>
+    /// Deactivates shop content but keeps CategoryPanel active for navigation
+    /// </summary>
+    void DeactivateShopContentExceptCategoryPanel()
+    {
+        if (shopMainPanel == null) return;
+
+        // ✅ STEP 1: Store CategoryPanel state and temporarily unparent it
+        Transform categoryPanelTransform = null;
+        Transform originalParent = null;
+        int originalSiblingIndex = 0;
+
+        if (categoryPanel != null)
+        {
+            categoryPanelTransform = categoryPanel.transform;
+            originalParent = categoryPanelTransform.parent;
+            originalSiblingIndex = categoryPanelTransform.GetSiblingIndex();
+
+            // Temporarily move CategoryPanel to Canvas level to preserve it
+            Transform canvasTransform = shopMainPanel.transform.parent; // Should be <==ShopUI==>
+            categoryPanelTransform.SetParent(canvasTransform, true);
+
+            Debug.Log("🔄 Temporarily moved CategoryPanel to preserve activation");
+        }
+
+        // ✅ STEP 2: Deactivate the main panel (this will deactivate all remaining children)
+        shopMainPanel.SetActive(false);
+
+        // ✅ STEP 3: Move CategoryPanel back to its original position
+        if (categoryPanelTransform != null && originalParent != null)
+        {
+            categoryPanelTransform.SetParent(originalParent, true);
+            categoryPanelTransform.SetSiblingIndex(originalSiblingIndex);
+
+            // Ensure it stays active
+            categoryPanel.gameObject.SetActive(true);
+
+            Debug.Log("🔄 CategoryPanel restored to original position and kept active");
+        }
+    }
+
 
     [ContextMenu("Refresh Shop Data")]
     public void RefreshShopData()

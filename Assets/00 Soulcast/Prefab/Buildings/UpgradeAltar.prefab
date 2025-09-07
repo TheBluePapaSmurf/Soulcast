@@ -208,11 +208,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a07548a67ceb9b418544e62fccf34e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridSize: {x: 10, y: 10}
   gridPosition: {x: 0, y: 0}
   buildingData: {fileID: 11400000, guid: e46dbf0d25583da44afa263d1e82a8dd, type: 2}
   enableAutoScaling: 1
-  baseScale: {x: 1, y: 1, z: 1}
+  baseScale: {x: 2.5, y: 2.5, z: 2.5}
   scaleMultiplier: 0.9
   showBounds: 1
   boundsColor: {r: 0, g: 1, b: 0, a: 1}
